@@ -1,0 +1,9 @@
+[submodule "lib/cpr"]
+	path = lib/cpr
+	url = https://github.com/whoshuu/cpr.git
+[submodule "lib/args"]
+	path = lib/args
+	url = https://github.com/Taywee/args
+[submodule "lib/gtest"]
+	path = lib/gtest
+	url = https://github.com/google/googletest

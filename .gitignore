@@ -1,0 +1,7 @@
+build/
+cmake-build-*/
+.idea/
+*.zsync
+*.zsync2
+*testfile*
+*.bak
