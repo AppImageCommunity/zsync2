@@ -19,8 +19,6 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_BINARY_DI
 # since there's headers in the build directory now, include that as well
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
-include_directories(bsd)
-
 set(ZSYNC2_DEPS ${CPR_LIBRARIES} libzsync)
 set(ZSYNC2_SRCS zsclient.cpp legacy_http.c legacy_url.c legacy_progress.c)
 
@@ -29,6 +27,7 @@ add_library(libzsync2 ${ZSYNC2_SRCS})
 # since the target is called libsomething, one doesn't need CMake's additional lib prefix
 set_target_properties(libzsync2 PROPERTIES PREFIX "")
 target_link_libraries(libzsync2 ${ZSYNC2_DEPS})
+target_include_directories(libzsync2 PUBLIC ../include)
 
 # core executable
 add_executable(zsync2 main.cpp ${ZSYNC2_SRCS})

@@ -19,9 +19,5 @@ add_subdirectory(cpr)
 add_library(args INTERFACE)
 target_include_directories(args INTERFACE args)
 
-# boost::boost_optional, imported from GitHub
-# added a CMakeLists for convenience
-add_subdirectory(optional)
-
 # Google Test framework
 add_subdirectory(gtest)
