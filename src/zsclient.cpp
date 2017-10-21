@@ -76,6 +76,9 @@ namespace zsync2 {
         }
 
         double calculateProgress() {
+            if(!zsHandle)
+                return 0;
+
             long long zgot, ztot;
 
             zsync_progress(zsHandle, &zgot, &ztot);
