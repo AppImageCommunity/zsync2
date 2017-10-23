@@ -585,6 +585,7 @@ int range_fetch_read_http_headers(struct range_fetch *rf) {
 
         if (rfgets(buf, sizeof(buf), rf) == NULL){
             /* most likely unexpected EOF from server */
+            fprintf(stderr, "EOF from server");
             return -1;
         }
         if (buf[0] == 0)
@@ -694,6 +695,8 @@ int range_fetch_read_http_headers(struct range_fetch *rf) {
          * Transfer-Encoding: chunked.
          */
     }
+
+    fprintf(stderr, "Error while parsing headers");
     return -1;
 }
 
