@@ -125,7 +125,8 @@ namespace zsync2 {
 
                 // might have been redirected to another URL
                 // therefore, store final URL of response as referer in case relative URLs will have to be resolved
-                referer = response.url;
+                referer = pathOrUrlToZSyncFile;
+                redirected = strdup(response.url.c_str());
 
                 // (mis)use response text as in-memory buffer to be able to pass it to the old zsync code
                 f = fmemopen((void*) response.text.c_str(), response.text.size(), "r");
@@ -239,8 +240,6 @@ namespace zsync2 {
         bool verifyDownloadedFile(std::string tempFilePath) {
             auto r = zsync_complete(zsHandle);
 
-            issueStatusMessage("verifying download...");
-
             switch (r) {
                 case -1:
                     issueStatusMessage("aborting, download available in " + tempFilePath);
@@ -305,7 +304,7 @@ namespace zsync2 {
             return true;
         }
 
-        int fetchRemainingBlocksHttp(std::string url, int urlType) {
+        int fetchRemainingBlocksHttp(const std::string &url, int urlType) {
             // use static const int instead of a define
             static const auto BUFFERSIZE = 8192;
 
@@ -327,8 +326,17 @@ namespace zsync2 {
                 return -1;
             }
 
+            // resolve redirections
+            std::string redirectedUrl;
+            if (use_redirected > 0) {
+                auto response = cpr::Head(absoluteUrl);
+                redirectedUrl = response.url;
+            } else {
+                redirectedUrl = absoluteUrl;
+            }
+
             /* Start a range fetch and a zsync receiver */
-            rf = range_fetch_start(absoluteUrl.c_str());
+            rf = range_fetch_start(redirectedUrl.c_str());
             if (rf == nullptr)
                 return -1;
 
@@ -444,6 +452,9 @@ namespace zsync2 {
 
                 if (!status[attempt]) {
                     const std::string tryurl = url[attempt];
+
+                    // legacy code -> TODO: find out what this does exactly
+                    use_redirected = 1;
 
                     auto result = fetchRemainingBlocksHttp(tryurl, utype);
 
@@ -561,9 +572,16 @@ namespace zsync2 {
                     // error check unnecessary -- failures will be checked for in the next part
                     unlink(oldFileBackup.c_str());
 
-                    if (link(pathToLocalFile.c_str(), oldFileBackup.c_str()) != 0 &&
-                        (errno != EPERM || rename(pathToLocalFile.c_str(), oldFileBackup.c_str()) != 0)) {
-                        issueStatusMessage("unable to back up old file " + oldFileBackup +
+                    if (link(pathToLocalFile.c_str(), oldFileBackup.c_str()) != 0) {
+                        issueStatusMessage("Unable to backup " + pathToLocalFile + " to " + oldFileBackup);
+                        ok = false;
+                    } else if (errno == EPERM) {
+                        int error = errno;
+                        issueStatusMessage("Unable to backup " + pathToLocalFile + " to " + oldFileBackup +
+                                           ": " + strerror(error));
+                        ok = false;
+                    } else if (rename(pathToLocalFile.c_str(), oldFileBackup.c_str()) != 0) {
+                        issueStatusMessage("Unable to back up " + pathToLocalFile + " to old file " + oldFileBackup +
                                            " - completed download left in " + tempFilePath);
                         // prevent overwrite of old file below
                         ok = false;
@@ -571,12 +589,17 @@ namespace zsync2 {
                 }
 
                 if (ok) {
-                    if (rename(tempFilePath.c_str(), pathToLocalFile.c_str())) {
+                    if (rename(tempFilePath.c_str(), pathToLocalFile.c_str()) == 0) {
+                        // success, setting mtime
                         if (mtime != -1)
                             setMtime(mtime);
                     } else {
-                        issueStatusMessage("unable to back up old file " + oldFileBackup +
-                                           " - completed download left in " + tempFilePath);
+                        int error = errno;
+                        std::ostringstream ss;
+                        ss << "Unable to move " << oldFileBackup << " to final file " << pathToLocalFile
+                           << ": " << strerror(error)
+                           << " - completed download left in " + tempFilePath;
+                        issueStatusMessage(ss.str());
                     }
                 }
             } else {
