@@ -34,6 +34,14 @@ add_executable(zsync2 main.cpp ${ZSYNC2_SRCS})
 target_link_libraries(zsync2 ${ZSYNC2_DEPS} args)
 target_compile_definitions(zsync2 PRIVATE -DZSYNC_STANDALONE)
 
+# install targets
+install(
+    TARGETS zsync2 libzsync2
+    RUNTIME DESTINATION bin
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib/static
+)
+
 ## zsyncmake2 executable
 #add_executable(zsyncmake2 make.cpp)
 #target_link_libraries(zsyncmake2 libzsync2 args optional)
