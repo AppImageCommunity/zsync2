@@ -420,6 +420,8 @@ int zsync_status(const struct zsync_state *zs) {
  */
 void zsync_progress(const struct zsync_state *zs, long long *got,
                     long long *total) {
+    if (!zs->rs)
+        return;
 
     if (got) {
         int todo = zs->blocks - rcksum_blocks_todo(zs->rs);
