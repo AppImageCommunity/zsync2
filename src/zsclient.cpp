@@ -76,13 +76,13 @@ namespace zsync2 {
         }
 
         double calculateProgress() {
-            if(!zsHandle)
+            if(zsHandle == nullptr)
                 return 0;
 
             long long zgot, ztot;
 
             zsync_progress(zsHandle, &zgot, &ztot);
-            return (zgot / ztot);
+            return (double) zgot / (double) ztot;
         };
 
         bool setMtime(time_t mtime) {
