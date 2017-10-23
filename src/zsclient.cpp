@@ -299,7 +299,7 @@ namespace zsync2 {
                 if (slashPos == std::string::npos)
                     return false;
 
-                final = base.substr(0, slashPos) + relative;
+                final = base.substr(0, slashPos + 1) + relative;
             }
 
             return true;
@@ -328,7 +328,7 @@ namespace zsync2 {
             }
 
             /* Start a range fetch and a zsync receiver */
-            rf = range_fetch_start(url.c_str());
+            rf = range_fetch_start(absoluteUrl.c_str());
             if (rf == nullptr)
                 return -1;
 
@@ -338,7 +338,7 @@ namespace zsync2 {
                 return -1;
             }
 
-            issueStatusMessage("Downloading from " + url);
+            issueStatusMessage("Downloading from " + absoluteUrl);
 
             /* Create a read buffer */
             buf = static_cast<unsigned char *>(malloc(BUFFERSIZE));
