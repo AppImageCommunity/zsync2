@@ -126,7 +126,6 @@ namespace zsync2 {
                 // might have been redirected to another URL
                 // therefore, store final URL of response as referer in case relative URLs will have to be resolved
                 referer = pathOrUrlToZSyncFile;
-                redirected = strdup(response.url.c_str());
 
                 // (mis)use response text as in-memory buffer to be able to pass it to the old zsync code
                 f = fmemopen((void*) response.text.c_str(), response.text.size(), "r");
@@ -328,12 +327,8 @@ namespace zsync2 {
 
             // resolve redirections
             std::string redirectedUrl;
-            if (use_redirected > 0) {
-                auto response = cpr::Head(absoluteUrl);
-                redirectedUrl = response.url;
-            } else {
-                redirectedUrl = absoluteUrl;
-            }
+            auto response = cpr::Head(absoluteUrl);
+            redirectedUrl = response.url;
 
             /* Start a range fetch and a zsync receiver */
             rf = range_fetch_start(redirectedUrl.c_str());
@@ -452,9 +447,6 @@ namespace zsync2 {
 
                 if (!status[attempt]) {
                     const std::string tryurl = url[attempt];
-
-                    // legacy code -> TODO: find out what this does exactly
-                    use_redirected = 1;
 
                     auto result = fetchRemainingBlocksHttp(tryurl, utype);
 

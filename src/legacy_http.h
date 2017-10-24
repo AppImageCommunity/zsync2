@@ -16,12 +16,6 @@
 
 #pragma once
 
-extern char *referer;
-extern char *redirected;
-extern int use_redirected;
-extern int http_ssl_insecure;
-extern char *cookie;
-
 int set_proxy_from_string(const char* s);
 
 FILE* http_get(const char* orig_url, char** track_referer, const char* tfname);

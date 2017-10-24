@@ -72,8 +72,6 @@ typedef struct http_file HTTP_FILE;
 /* global curl handle */
 CURLM *multi_handle;
 
-int http_ssl_insecure = 0;
-
 char *cookie;
 
 struct range_fetch {
@@ -112,14 +110,16 @@ void setup_curl_handle(CURL *handle)
         curl_easy_setopt(handle, CURLOPT_PROXY, pr);
     }
 
-    if(http_ssl_insecure){
-        curl_easy_setopt( handle, CURLOPT_SSL_VERIFYPEER, 0 );
-        curl_easy_setopt( handle, CURLOPT_SSL_VERIFYHOST, 0 );
-    }
+    // no longer supported for obvious security reasons
+    // if(http_ssl_insecure){
+    //     curl_easy_setopt(handle, CURLOPT_SSL_VERIFYPEER, 0 );
+    //     curl_easy_setopt(handle, CURLOPT_SSL_VERIFYHOST, 0 );
+    // }
 
-    if(cookie != NULL){
-        curl_easy_setopt(handle, CURLOPT_COOKIE, cookie);
-    }
+    // cookie support deactivated to get rid of global static variables
+    // if(cookie != NULL){
+    //     curl_easy_setopt(handle, CURLOPT_COOKIE, cookie);
+    // }
 
     char* verbose;
     verbose = getenv ("CURLOPT_VERBOSE");
@@ -449,12 +449,6 @@ size_t http_fread(void *ptr, size_t size, size_t nmemb, HTTP_FILE *file)
     want = want / size; // number of items
     return want;
 }
-
-
-/* Remember referrer */
-char *referer;
-char *redirected;
-int use_redirected = 0;
 
 /* range_fetch methods */
 
