@@ -40,6 +40,7 @@ install(
     RUNTIME DESTINATION bin
     LIBRARY DESTINATION lib
     ARCHIVE DESTINATION lib/static
+    INCLUDES DESTINATION include
 )
 
 ## zsyncmake2 executable
