@@ -67,7 +67,7 @@ namespace zsync2 {
         // nextStatusMessage()
         // when defining ZSYNC_STANDALONE, the messages are printed out on stderr directly instead
         // TODO: IDEA: why not allow passing an optional "error=true/false" flag?
-        void issueStatusMessage(std::string message) {
+        void issueStatusMessage(const std::string &message) {
 #ifndef ZSYNC_STANDALONE
             statusMessages.push_back(message);
 #else
@@ -187,7 +187,7 @@ namespace zsync2 {
         // open a gz-compressed file using zlib
         // the function produces a transparent wrapper for zlib, so that normal file operations (fread, fseek etc.) can
         // be used without noticing any difference
-        std::FILE* openGzFile(std::string filePath) {
+        std::FILE* openGzFile(const std::string &filePath) {
             // open file using zlib
             auto f = gzopen(filePath.c_str(), "r");
 
@@ -207,7 +207,7 @@ namespace zsync2 {
             return fopencookie(nullptr, "r", iofuncs);
         }
 
-        bool readSeedFile(std::string pathToSeedFile) {
+        bool readSeedFile(const std::string &pathToSeedFile) {
             std::FILE* f;
 
             // check whether to decompress this file
