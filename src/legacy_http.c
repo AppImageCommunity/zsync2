@@ -33,16 +33,7 @@
 #include <time.h>
 #include <curl/curl.h>
 
-#ifndef HAVE_GETADDRINFO
-#include "getaddrinfo.h"
-#endif
-
-#ifdef WITH_DMALLOC
-# include <dmalloc.h>
-#endif
-
 #include "legacy_http.h"
-#include "legacy_url.h"
 #include "legacy_progress.h"
 #include "format_string.h"
 
@@ -69,17 +60,13 @@ struct http_file
 
 typedef struct http_file HTTP_FILE;
 
-/* global curl handle */
-CURLM *multi_handle;
-
-char *cookie;
-
 struct range_fetch {
     /* URL to retrieve from, host:port, auth header */
     char *url;
     HTTP_FILE *file;
     char *boundary; /* If we're in the middle of reading a mime/multipart
                      * response, this is the boundary string. */
+    CURLM *multi_handle;
 
     /* State for block currently being read */
     size_t block_left;  /* non-zero if we're in the middle of reading a block */
@@ -280,8 +267,8 @@ HTTP_FILE *http_fetch_ranges(struct range_fetch* rf)
 {
     HTTP_FILE *file;
 
-    if(!multi_handle){
-        multi_handle = curl_multi_init();
+    if(!rf->multi_handle){
+        rf->multi_handle = curl_multi_init();
     }
 
     if(!rf->file) {
@@ -308,11 +295,11 @@ HTTP_FILE *http_fetch_ranges(struct range_fetch* rf)
     /* we still process the headers ourselves so we can get range information */
     curl_easy_setopt(file->handle.curl, CURLOPT_HEADER, 1L);
     curl_easy_setopt(file->handle.curl, CURLOPT_WRITEFUNCTION, write_callback);
-    curl_multi_add_handle(multi_handle, file->handle.curl);
+    curl_multi_add_handle(rf->multi_handle, file->handle.curl);
     rf->file = file;
 
     http_load_ranges(rf);
-    curl_multi_perform(multi_handle, &rf->file->still_running);
+    curl_multi_perform(rf->multi_handle, &rf->file->still_running);
 
     return rf->file;
 }
@@ -322,7 +309,7 @@ HTTP_FILE *http_fetch_ranges(struct range_fetch* rf)
  *
  * Closes the connection, cleans up curl.
  */
-int http_fclose(HTTP_FILE *file)
+int http_fclose(HTTP_FILE *file, CURLM* multi_handle)
 {
     curl_multi_remove_handle(multi_handle, file->handle.curl);
     curl_easy_cleanup(file->handle.curl);
@@ -347,7 +334,7 @@ int http_feof(HTTP_FILE *file)
 }
 
 
-static int fill_buffer(HTTP_FILE *file, size_t want)
+static int fill_buffer(HTTP_FILE *file, size_t want, CURLM* multi_handle)
 {
     fd_set fdread;
     fd_set fdwrite;
@@ -427,11 +414,11 @@ static int use_buffer(HTTP_FILE *file, int want)
  *
  * Reads bytes from a HTTP_FILE.
  */
-size_t http_fread(void *ptr, size_t size, size_t nmemb, HTTP_FILE *file)
+size_t http_fread(void *ptr, size_t size, size_t nmemb, HTTP_FILE *file, struct range_fetch *rf)
 {
     size_t want;
     want = nmemb * size;
-    fill_buffer(file, want);
+    fill_buffer(file, want, rf);
 
     if(!file->buffer_pos){
         /* nothing read, nothing in buffer */
@@ -464,7 +451,7 @@ char *rfgets(char *ptr, size_t size, struct range_fetch *rf)
     size_t want = size - 1;/* always need to leave room for zero termination */
     size_t loop;
     HTTP_FILE *file = rf->file;
-    fill_buffer(file, want);
+    fill_buffer(file, want, rf);
 
     /* check if theres data in the buffer - if not fill either errored or
      * EOF */
@@ -520,6 +507,7 @@ struct range_fetch *range_fetch_start(const char *orig_url) {
     rf->file = NULL;                        /* http file not open */
     rf->ranges_todo = NULL;             /* And no ranges given yet */
     rf->nranges = rf->rangesdone = 0;
+    rf->multi_handle = NULL;
 
     return rf;
 }
@@ -821,7 +809,7 @@ int get_range_block(struct range_fetch *rf, off_t * offset, unsigned char *data,
         bytes_to_request = dlen;
     }
 
-    bytes_to_caller = http_fread(data, 1, bytes_to_request, rf->file);
+    bytes_to_caller = http_fread(data, 1, bytes_to_request, rf->file, rf);
 
     /* update internal stats of how many blocks are left,
        file offset, and bytes downloaded. */
@@ -842,7 +830,7 @@ off_t range_fetch_bytes_down(const struct range_fetch * rf) {
 void range_fetch_end(struct range_fetch *rf) {
     /* this will clean up the file, buffer, and close the connection */
     if (rf->file != NULL)
-        http_fclose(rf->file);
+        http_fclose(rf->file, rf->multi_handle);
 
     free(rf->ranges_todo);
     free(rf->boundary);
