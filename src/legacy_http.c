@@ -418,7 +418,7 @@ size_t http_fread(void *ptr, size_t size, size_t nmemb, HTTP_FILE *file, struct 
 {
     size_t want;
     want = nmemb * size;
-    fill_buffer(file, want, rf);
+    fill_buffer(file, want, rf->multi_handle);
 
     if(!file->buffer_pos){
         /* nothing read, nothing in buffer */
@@ -451,7 +451,7 @@ char *rfgets(char *ptr, size_t size, struct range_fetch *rf)
     size_t want = size - 1;/* always need to leave room for zero termination */
     size_t loop;
     HTTP_FILE *file = rf->file;
-    fill_buffer(file, want, rf);
+    fill_buffer(file, want, rf->multi_handle);
 
     /* check if theres data in the buffer - if not fill either errored or
      * EOF */
