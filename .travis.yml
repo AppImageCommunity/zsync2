@@ -5,8 +5,7 @@ dist: trusty
 
 install:
   # replace existing curl with the PPA one
-  # installing system zsync to get zsyncmake command until zsyncmake2 is ready
-  - sudo apt-get -y install git cmake g++ libcurl3-gnutls-dev zsync
+  - sudo apt-get -y install git cmake g++ libcurl3-gnutls-dev
 
 script:
   - git submodule update --init
