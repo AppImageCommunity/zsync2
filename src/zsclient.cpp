@@ -110,9 +110,6 @@ namespace zsync2 {
             struct zsync_state *zs;
             std::FILE* f;
 
-            // predefine response to make sure it is in scope after the if statement
-            cpr::Response response;
-
             if (isfile(pathOrUrlToZSyncFile)) {
                 f = std::fopen(pathOrUrlToZSyncFile.c_str(), "r");
             } else {
@@ -121,7 +118,13 @@ namespace zsync2 {
                     return false;
                 }
 
-                response = cpr::Get(pathOrUrlToZSyncFile);
+                auto response = cpr::Get(pathOrUrlToZSyncFile);
+
+                if (response.status_code < 200 || response.status_code >= 300) {
+                    issueStatusMessage("Bad status code " + std::to_string(response.status_code) +
+                                       " when trying to resolve redirections!");
+                    return false;
+                }
 
                 // might have been redirected to another URL
                 // therefore, store final URL of response as referer in case relative URLs will have to be resolved
@@ -328,6 +331,15 @@ namespace zsync2 {
             // resolve redirections
             std::string redirectedUrl;
             auto response = cpr::Head(absoluteUrl);
+
+            if (response.status_code < 200 || response.status_code >= 300) {
+                issueStatusMessage("Bad status code " + std::to_string(response.status_code) +
+                                   " when trying to resolve redirections!");
+                return false;
+            }
+
+            if (response.error)
+
             redirectedUrl = response.url;
 
             /* Start a range fetch and a zsync receiver */
