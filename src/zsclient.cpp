@@ -67,7 +67,7 @@ namespace zsync2 {
         // nextStatusMessage()
         // when defining ZSYNC_STANDALONE, the messages are printed out on stderr directly instead
         // TODO: IDEA: why not allow passing an optional "error=true/false" flag?
-        void issueStatusMessage(std::string message) {
+        void issueStatusMessage(const std::string &message) {
 #ifndef ZSYNC_STANDALONE
             statusMessages.push_back(message);
 #else
@@ -126,7 +126,6 @@ namespace zsync2 {
                 // might have been redirected to another URL
                 // therefore, store final URL of response as referer in case relative URLs will have to be resolved
                 referer = pathOrUrlToZSyncFile;
-                redirected = strdup(response.url.c_str());
 
                 // (mis)use response text as in-memory buffer to be able to pass it to the old zsync code
                 f = fmemopen((void*) response.text.c_str(), response.text.size(), "r");
@@ -187,7 +186,7 @@ namespace zsync2 {
         // open a gz-compressed file using zlib
         // the function produces a transparent wrapper for zlib, so that normal file operations (fread, fseek etc.) can
         // be used without noticing any difference
-        std::FILE* openGzFile(std::string filePath) {
+        std::FILE* openGzFile(const std::string &filePath) {
             // open file using zlib
             auto f = gzopen(filePath.c_str(), "r");
 
@@ -207,7 +206,7 @@ namespace zsync2 {
             return fopencookie(nullptr, "r", iofuncs);
         }
 
-        bool readSeedFile(std::string pathToSeedFile) {
+        bool readSeedFile(const std::string &pathToSeedFile) {
             std::FILE* f;
 
             // check whether to decompress this file
@@ -328,12 +327,8 @@ namespace zsync2 {
 
             // resolve redirections
             std::string redirectedUrl;
-            if (use_redirected > 0) {
-                auto response = cpr::Head(absoluteUrl);
-                redirectedUrl = response.url;
-            } else {
-                redirectedUrl = absoluteUrl;
-            }
+            auto response = cpr::Head(absoluteUrl);
+            redirectedUrl = response.url;
 
             /* Start a range fetch and a zsync receiver */
             rf = range_fetch_start(redirectedUrl.c_str());
@@ -452,9 +447,6 @@ namespace zsync2 {
 
                 if (!status[attempt]) {
                     const std::string tryurl = url[attempt];
-
-                    // legacy code -> TODO: find out what this does exactly
-                    use_redirected = 1;
 
                     auto result = fetchRemainingBlocksHttp(tryurl, utype);
 

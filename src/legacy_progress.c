@@ -13,18 +13,10 @@
  *   COPYING file for details.
  */
 
-#include "zsglobal.h"
-
 #include <stdio.h>
 #include <time.h>
 
-#ifdef WITH_DMALLOC
-# include <dmalloc.h>
-#endif
-
 #include "legacy_progress.h"
-
-int no_progress;
 
 /* progbar(chars, percent)
  * (Re)print progress bar with chars out of 20 shown and followed by the given
