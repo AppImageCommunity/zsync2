@@ -28,4 +28,8 @@ script:
   - find AppDir -type f -iname 'libssl*.so' -delete
   - find AppDir -type f -iname 'libcrypt*.so' -delete
   - ./appimagetool-x86_64.AppImage AppDir zsync2-x86_64.AppImage
-  - wget -O- -nv --method PUT --body-file=zsync2-x86_64.AppImage https://transfer.sh/zsync2-x86_64.AppImage
+
+after_success:
+  - ls -lh build/
+  - wget -c https://github.com/probonopd/uploadtool/raw/master/upload.sh
+  - bash ./upload.sh build/zsync2*.AppImage*
