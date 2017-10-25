@@ -23,6 +23,21 @@ are compatible to older revisions of the C++ language. Therefore, a pattern
 called Opaque Data Type is applied to all classes defined by the headers of
 this library.
 
+## Building
+
+To build on Debian or Ubuntu style systems:
+
+```
+sudo apt-get -y install git cmake g++ libssl-dev libssh2-1-dev libcurl4-gnutls-dev
+   
+git submodule update --init
+mkdir build
+cd build
+cmake .. -DUSE_SYSTEM_CURL=1 -DBUILD_CPR_TESTS=0
+make -j$(nproc)
+```
+
+See `.travis.yml` for building on Travis CI.
 
 ## Functional description
 
