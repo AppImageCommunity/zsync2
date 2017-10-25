@@ -42,7 +42,7 @@ namespace zsync2 {
 
         std::string referer;
 
-        enum State {INITIALIZED, RUNNING, DONE};
+        enum State {INITIALIZED=0, RUNNING, VERIFYING, DONE};
         State state;
 
         long long localUsed;
@@ -79,6 +79,9 @@ namespace zsync2 {
             if(zsHandle == nullptr)
                 return 0;
 
+            if (state >= VERIFYING)
+                return 1;
+
             long long zgot, ztot;
 
             zsync_progress(zsHandle, &zgot, &ztot);
@@ -110,6 +113,10 @@ namespace zsync2 {
             struct zsync_state *zs;
             std::FILE* f;
 
+            // keep response outside block to make sure the fmemopen() trick works
+            // otherwise, on file reads, when response has been deleted, there will be SIGSEGVs
+            cpr::Response response;
+
             if (isfile(pathOrUrlToZSyncFile)) {
                 f = std::fopen(pathOrUrlToZSyncFile.c_str(), "r");
             } else {
@@ -118,11 +125,11 @@ namespace zsync2 {
                     return false;
                 }
 
-                auto response = cpr::Get(pathOrUrlToZSyncFile);
+                response = cpr::Get(pathOrUrlToZSyncFile);
 
                 if (response.status_code < 200 || response.status_code >= 300) {
                     issueStatusMessage("Bad status code " + std::to_string(response.status_code) +
-                                       " when trying to resolve redirections!");
+                                       " while trying to download .zsync file!");
                     return false;
                 }
 
@@ -240,6 +247,8 @@ namespace zsync2 {
         }
 
         bool verifyDownloadedFile(std::string tempFilePath) {
+            state = VERIFYING;
+
             auto r = zsync_complete(zsHandle);
 
             switch (r) {
@@ -337,9 +346,6 @@ namespace zsync2 {
                                    " when trying to resolve redirections!");
                 return false;
             }
-
-            if (response.error)
-
             redirectedUrl = response.url;
 
             /* Start a range fetch and a zsync receiver */
