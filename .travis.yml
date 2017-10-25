@@ -30,9 +30,9 @@ script:
   - ./appimagetool-x86_64.AppImage AppDir zsync2-x86_64.AppImage
 
 after_success:
-  - ls -lh build/
+  - ls -lh
   - wget -c https://github.com/probonopd/uploadtool/raw/master/upload.sh
-  - bash ./upload.sh build/zsync2*.AppImage*
+  - bash ./upload.sh zsync2*.AppImage*
 
 branches:
   except:
