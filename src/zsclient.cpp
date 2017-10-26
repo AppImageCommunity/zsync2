@@ -337,19 +337,8 @@ namespace zsync2 {
                 return -1;
             }
 
-            // resolve redirections
-            std::string redirectedUrl;
-            auto response = cpr::Head(absoluteUrl);
-
-            if (response.status_code < 200 || response.status_code >= 300) {
-                issueStatusMessage("Bad status code " + std::to_string(response.status_code) +
-                                   " when trying to resolve redirections!");
-                return false;
-            }
-            redirectedUrl = response.url;
-
             /* Start a range fetch and a zsync receiver */
-            rf = range_fetch_start(redirectedUrl.c_str());
+            rf = range_fetch_start(absoluteUrl.c_str());
             if (rf == nullptr)
                 return -1;
 
