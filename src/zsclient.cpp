@@ -109,7 +109,7 @@ namespace zsync2 {
             return true;
         }
 
-        bool readZSyncFile() {
+        struct zsync_state* readZSyncFile() {
             struct zsync_state *zs;
             std::FILE* f;
 
@@ -122,7 +122,7 @@ namespace zsync2 {
             } else {
                 if (!isUrlAbsolute(pathOrUrlToZSyncFile)) {
                     issueStatusMessage("No such file or directory and not a URL: " + pathOrUrlToZSyncFile);
-                    return false;
+                    return nullptr;
                 }
 
                 response = cpr::Get(pathOrUrlToZSyncFile);
@@ -130,7 +130,7 @@ namespace zsync2 {
                 if (response.status_code < 200 || response.status_code >= 300) {
                     issueStatusMessage("Bad status code " + std::to_string(response.status_code) +
                                        " while trying to download .zsync file!");
-                    return false;
+                    return nullptr;
                 }
 
                 // might have been redirected to another URL
@@ -143,17 +143,15 @@ namespace zsync2 {
 
             if ((zs = zsync_begin(f)) == nullptr) {
                 issueStatusMessage("Failed to parse .zsync file!");
-                return false;
+                return nullptr;
             }
 
             if (fclose(f) != 0) {
                 issueStatusMessage("fclose() call failed!");
-                return false;
+                return nullptr;
             }
 
-            zsHandle = zs;
-
-            return true;
+            return zs;
         }
 
         // TODO: verify functionality
@@ -477,7 +475,8 @@ namespace zsync2 {
             state = RUNNING;
 
             /**** step 1: read .zsync file ****/
-            if (!readZSyncFile()) {
+            if ((zsHandle = readZSyncFile()) == nullptr) {
+                issueStatusMessage("Reading and/or parsing .zsync file failed!");
                 state = DONE;
                 return false;
             }
