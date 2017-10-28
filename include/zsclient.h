@@ -11,7 +11,7 @@ namespace zsync2 {
         Private *d;
 
     public:
-        ZSyncClient(std::string urlOrPathToZsyncFile, std::string pathToLocalFile = "");
+        explicit ZSyncClient(std::string urlOrPathToZsyncFile, std::string pathToLocalFile = "");
         ~ZSyncClient();
 
     public:
@@ -22,5 +22,19 @@ namespace zsync2 {
         // fetch next available status message from the application
         // returns true if a message is available and sets passed string, otherwise returns false
         bool nextStatusMessage(std::string& message);
+        // checks whether a new version is available on the server, i.e., an update is necessary
+        // there's several methods available:
+        // - method 0: hash local file using SHA-1, download meta information from server, compare to server-side SHA1
+        //   value (safest method, but also slowest)
+        // - method 1: download meta information from server, compare modification time (mtime) to local file's mtim
+        //   this method is less reliable, as the user could call touch etc. on the file. However, for app stores
+        //   managing the files, this method should be similarly reliable
+        // (other methods might follow)
+        // updateAvailable parameter is set to true if changes are available (or the file needs to be downloaded in
+        // total), false otherwise
+        // returns false if update check fails, otherwise true
+        bool checkForChanges(bool& updateAvailable, unsigned int method = 0);
+        // add seed file that should be searched for usable data during the download process
+        void addSeedFile(const std::string& path);
     };
 }

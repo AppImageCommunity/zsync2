@@ -11,6 +11,8 @@
 
 // library includes
 #include <cpr/cpr.h>
+#include <fcntl.h>
+
 extern "C" {
     // temporarily include curl as well until cpr can be used directly
     #include <curl/curl.h>
@@ -109,7 +111,7 @@ namespace zsync2 {
             return true;
         }
 
-        struct zsync_state* readZSyncFile() {
+        struct zsync_state* readZSyncFile(bool headersOnly = false) {
             struct zsync_state *zs;
             std::FILE* f;
 
@@ -125,7 +127,12 @@ namespace zsync2 {
                     return nullptr;
                 }
 
-                response = cpr::Get(pathOrUrlToZSyncFile);
+                // if interested in headers only, the first 1kB should contain the interesting data, the rest will be
+                // skipped
+                if (headersOnly)
+                    response = cpr::Get(pathOrUrlToZSyncFile, cpr::Header{{"range", "bytes=0-4095"}});
+                else
+                    response = cpr::Get(pathOrUrlToZSyncFile);
 
                 if (response.status_code < 200 || response.status_code >= 300) {
                     issueStatusMessage("Bad status code " + std::to_string(response.status_code) +
@@ -141,7 +148,7 @@ namespace zsync2 {
                 f = fmemopen((void*) response.text.c_str(), response.text.size(), "r");
             }
 
-            if ((zs = zsync_begin(f)) == nullptr) {
+            if ((zs = zsync_begin(f, headersOnly ? 1 : 0)) == nullptr) {
                 issueStatusMessage("Failed to parse .zsync file!");
                 return nullptr;
             }
@@ -156,6 +163,10 @@ namespace zsync2 {
 
         // TODO: verify functionality
         bool populatePathToLocalFileFromZSyncFile() {
+            // don't overwrite path
+            if (!pathToLocalFile.empty())
+                return true;
+
             auto* p = zsync_filename(zsHandle);
 
             std::string newPath;
@@ -483,11 +494,10 @@ namespace zsync2 {
 
             // check whether path was explicitly passed
             // otherwise, use the one defined in the .zsync file
-            if (pathToLocalFile.empty())
-                if (!populatePathToLocalFileFromZSyncFile()) {
-                    state = DONE;
-                    return false;
-                }
+            if (!populatePathToLocalFileFromZSyncFile()) {
+                state = DONE;
+                return false;
+            }
 
             // calculate path to temporary file
             auto tempFilePath = pathToLocalFile + ".part";
@@ -609,6 +619,46 @@ namespace zsync2 {
             state = DONE;
             return true;
         }
+
+        bool checkForChanges(bool& updateAvailable, const unsigned int method) {
+            struct zsync_state *zs;
+
+            // now, read zsync file
+            if ((zs = readZSyncFile(true)) == nullptr) {
+                issueStatusMessage("Reading and/or parsing .zsync file failed!");
+                return false;
+            }
+
+            switch (method) {
+                case 0: {
+                    const auto fh = open(pathToLocalFile.c_str(), O_RDONLY);
+
+                    switch(zsync_sha1(zs, fh)) {
+                        case 1:
+                            updateAvailable = true;
+                            break;
+                        case -1:
+                            updateAvailable = false;
+                            break;
+                        default:
+                            // unknown return value
+                            return false;
+                    }
+                    break;
+                }
+                case 1: {
+                    struct stat appImageStat;
+                    if (stat(pathToLocalFile.c_str(), &appImageStat) != 0) {
+                        return false;
+                    }
+
+                    updateAvailable = (zsync_mtime(zs) > appImageStat.st_mtime);
+                    break;
+                }
+            }
+
+            return true;
+        }
     };
 
     ZSyncClient::ZSyncClient(const std::string pathOrUrlToZSyncFile, const std::string pathToLocalFile) {
@@ -641,5 +691,13 @@ namespace zsync2 {
         d->state = d->DONE;
 
         return result;
+    }
+
+    bool ZSyncClient::checkForChanges(bool& updateAvailable, const unsigned int method) {
+        return d->checkForChanges(updateAvailable, method);
+    }
+
+    void ZSyncClient::addSeedFile(const std::string &path) {
+        d->seedFiles.insert(path);
     }
 }

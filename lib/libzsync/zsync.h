@@ -17,7 +17,7 @@ struct zsync_state;
 
 /* zsync_begin - load a zsync file and return data structure to use for the rest of the process.
  */
-struct zsync_state* zsync_begin(FILE* cf);
+struct zsync_state* zsync_begin(FILE* cf, int headersOnly);
 
 /* zsync_hint_decompress - if it returns non-zero, this suggests that 
  *  compressed seed files should be decompressed */
@@ -93,3 +93,9 @@ void zsync_end_receive(struct zsync_receiver* zr);
  * Returns 0 for success; if not, you should not submit more data. */
 int zsync_receive_data(struct zsync_receiver* zr, const unsigned char* buf, off_t offset, size_t len);
 
+/* zsync_sha1(self, filedesc)
+ * Given the currently-open-and-at-start-of-file complete local copy of the
+ * target, read it and compare the SHA1 checksum with the one from the .zsync.
+ * Returns -1 or 1 as per zsync_complete.
+ */
+int zsync_sha1(struct zsync_state *zs, int fh);
