@@ -1,6 +1,6 @@
 // system headers
 #include <iostream>
-#include <string>
+#include <cstring>
 
 // library headers
 #include <args.hxx>
@@ -14,9 +14,12 @@ int main(const int argc, const char** argv) {
     args::ArgumentParser parser("zsync2 -- the probably easiest efficient way to update files",
                                 "Brand new C++11 frontend to zsync.");
     args::HelpFlag help(parser, "help", "Display this help menu", {'h', "help"});
-    args::ValueFlagList<std::string> seedFiles(parser, "Seed Files", "Use data from these files during update process", {'I'});
-    args::Flag checkForChanges(parser, "Check for changes", "Check for changes on the server. Exits with code 1 ", {'j'});
-    args::Positional<std::string> pathOrUrl(parser, "Path or URL", "Path or URL to .zsync(2) file");
+    args::ValueFlagList<std::string> seedFiles(parser, "seed file", "Use data from this file during update process. "
+                                                                    "Can be specified more than once.", {'I'});
+    args::Flag checkForChanges(parser, "checkForChanges", "Check for changes on the server. Exits with code 1 if the "
+                                                          "file changed on the server, otherwise 0.", {'j'});
+    args::Flag verbose(parser, "verbose", "Switch on verbose mode", {'v'});
+    args::Positional<std::string> pathOrUrl(parser, "path or URL", "Path or URL to .zsync(2) file");
 
     try {
         parser.ParseCLI(argc, argv);
@@ -27,6 +30,10 @@ int main(const int argc, const char** argv) {
         std::cerr << e.what() << std::endl;
         std::cerr << parser;
         return 1;
+    }
+
+    if (verbose) {
+        putenv(strdup("CURLOPT_VERBOSE=1"));
     }
 
     if (!pathOrUrl) {
