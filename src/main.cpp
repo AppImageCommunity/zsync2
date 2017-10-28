@@ -44,13 +44,23 @@ int main(const int argc, const char** argv) {
     cout << pathOrUrl.Get() << endl;
     zsync2::ZSyncClient client(pathOrUrl.Get());
 
-    if(seedFiles) {
+    if (seedFiles) {
         for (const auto &seedFile : seedFiles.Get()) {
             client.addSeedFile(seedFile);
         }
     }
 
-    if(!client.run())
+    if (checkForChanges) {
+        bool changesAvailable;
+
+        // return some non-0/1 error code in case the update check itself fails
+        if (!client.checkForChanges(changesAvailable))
+            return 3;
+
+        return changesAvailable ? 1 : 0;
+    }
+
+    if (!client.run())
         return 1;
 
     return 0;
