@@ -115,9 +115,8 @@ namespace zsync2 {
             struct zsync_state *zs;
             std::FILE* f;
 
-            // keep response outside block to make sure the fmemopen() trick works
-            // otherwise, on file reads, when response has been deleted, there will be SIGSEGVs
-            cpr::Response response;
+            // buffer storing the data
+            std::vector<char> buffer;
 
             if (isfile(pathOrUrlToZSyncFile)) {
                 f = std::fopen(pathOrUrlToZSyncFile.c_str(), "r");
@@ -127,25 +126,62 @@ namespace zsync2 {
                     return nullptr;
                 }
 
+                auto checkResponseForError = [this](cpr::Response response, unsigned int statusCode) {
+                    if (response.status_code != statusCode) {
+                        issueStatusMessage("Bad status code " + std::to_string(response.status_code) +
+                                           " while trying to download .zsync file!");
+                        return false;
+                    }
+                    return true;
+                };
+
                 // if interested in headers only, the first 1kB should contain the interesting data, the rest will be
                 // skipped
-                if (headersOnly)
-                    response = cpr::Get(pathOrUrlToZSyncFile, cpr::Header{{"range", "bytes=0-4095"}});
-                else
-                    response = cpr::Get(pathOrUrlToZSyncFile);
+                if (headersOnly) {
+                    static const auto chunkSize = 1024;
+                    unsigned long currentChunk = 0;
 
-                if (response.status_code < 200 || response.status_code >= 300) {
-                    issueStatusMessage("Bad status code " + std::to_string(response.status_code) +
-                                       " while trying to download .zsync file!");
-                    return nullptr;
+                    // keep a session to make use of cURL's persistent connections feature
+                    cpr::Session session;
+
+                    // download a chunk at a time
+                    while (true) {
+                        session.SetUrl(pathOrUrlToZSyncFile);
+
+                        std::ostringstream bytes;
+                        bytes << "bytes=" << currentChunk << "-" << currentChunk + chunkSize - 1;
+                        session.SetHeader(cpr::Header{{"range", bytes.str()}});
+
+                        auto response = session.Get();
+
+                        // expect a range response
+                        if (!checkResponseForError(response, 206))
+                            return nullptr;
+
+                        std::copy(response.text.begin(), response.text.end(), std::back_inserter(buffer));
+
+                        // check whether double newline is contained, which marks the last request
+                        if (response.text.find("\n\n") || response.text.find("\r\n\r\n"))
+                            break;
+
+                        currentChunk += chunkSize;
+                    }
+                } else {
+                    auto response = cpr::Get(pathOrUrlToZSyncFile);
+
+                    // expecting a 200 response
+                    if (!checkResponseForError(response, 200))
+                        return nullptr;
+
+                    std::copy(response.text.begin(), response.text.end(), std::back_inserter(buffer));
                 }
 
                 // might have been redirected to another URL
                 // therefore, store final URL of response as referer in case relative URLs will have to be resolved
                 referer = pathOrUrlToZSyncFile;
 
-                // (mis)use response text as in-memory buffer to be able to pass it to the old zsync code
-                f = fmemopen((void*) response.text.c_str(), response.text.size(), "r");
+                // open buffer as file
+                f = fmemopen(buffer.data(), buffer.size(), "r");
             }
 
             if ((zs = zsync_begin(f, headersOnly ? 1 : 0)) == nullptr) {
