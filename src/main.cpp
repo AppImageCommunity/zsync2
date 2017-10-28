@@ -41,7 +41,6 @@ int main(const int argc, const char** argv) {
         return 2;
     }
 
-    cout << pathOrUrl.Get() << endl;
     zsync2::ZSyncClient client(pathOrUrl.Get());
 
     if (seedFiles) {
@@ -51,13 +50,21 @@ int main(const int argc, const char** argv) {
     }
 
     if (checkForChanges) {
+        cout << "Checking for changes..." << endl;
+
         bool changesAvailable;
 
         // return some non-0/1 error code in case the update check itself fails
         if (!client.checkForChanges(changesAvailable))
             return 3;
 
-        return changesAvailable ? 1 : 0;
+        if (changesAvailable) {
+            cout << "File has changed on the server, update required!" << endl;
+            return 1;
+        } else {
+            cout << "No changes detected, file is up to date!" << endl;
+            return 0;
+        }
     }
 
     if (!client.run())
