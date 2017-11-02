@@ -382,8 +382,13 @@ namespace zsync2 {
                 return -1;
             }
 
+            // follow redirections of the URL before passing it to libzsync to avoid unnecessary redirects for
+            // multiple range requests
+            auto response = cpr::Head(absoluteUrl);
+            std::string redirectedUrl = response.url;
+
             /* Start a range fetch and a zsync receiver */
-            rf = range_fetch_start(absoluteUrl.c_str());
+            rf = range_fetch_start(redirectedUrl.c_str());
             if (rf == nullptr)
                 return -1;
 
@@ -393,7 +398,7 @@ namespace zsync2 {
                 return -1;
             }
 
-            issueStatusMessage("Downloading from " + absoluteUrl);
+            issueStatusMessage("Downloading from " + redirectedUrl);
 
             /* Create a read buffer */
             buf = static_cast<unsigned char *>(malloc(BUFFERSIZE));
