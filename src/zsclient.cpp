@@ -198,12 +198,12 @@ namespace zsync2 {
         }
 
         // TODO: verify functionality
-        bool populatePathToLocalFileFromZSyncFile() {
+        bool populatePathToLocalFileFromZSyncFile(struct zsync_state* zs) {
             // don't overwrite path
             if (!pathToLocalFile.empty())
                 return true;
 
-            auto* p = zsync_filename(zsHandle);
+            auto* p = zsync_filename(zs);
 
             std::string newPath;
 
@@ -530,7 +530,7 @@ namespace zsync2 {
 
             // check whether path was explicitly passed
             // otherwise, use the one defined in the .zsync file
-            if (!populatePathToLocalFileFromZSyncFile()) {
+            if (!populatePathToLocalFileFromZSyncFile(zsHandle)) {
                 state = DONE;
                 return false;
             }
@@ -665,21 +665,41 @@ namespace zsync2 {
                 return false;
             }
 
+            // make sure pathToLocalFile is set
+            if (!populatePathToLocalFileFromZSyncFile(zs)) {
+                issueStatusMessage("Failed to read filename from .zsync file!");
+                return false;
+            }
+
+            // check whether file exists at all, because if not, a full download is required
+            if (!isfile(pathToLocalFile)) {
+                issueStatusMessage("Cannot find file " + pathToLocalFile + ", triggering full download");
+                updateAvailable = true;
+                return true;
+            }
+
             switch (method) {
                 case 0: {
                     const auto fh = open(pathToLocalFile.c_str(), O_RDONLY);
 
-                    switch(zsync_sha1(zs, fh)) {
-                        case 1:
+                    if (fh < 0) {
+                        issueStatusMessage("Error opening file " + pathToLocalFile);
+                    }
+
+                    auto rv = zsync_sha1(zs, fh);
+                    switch(rv) {
+                        case -1:
                             updateAvailable = true;
                             break;
-                        case -1:
+                        case 1:
                             updateAvailable = false;
                             break;
                         default:
-                            // unknown return value
+                            // unknown/invalid return value
+                            close(fh);
                             return false;
                     }
+                    close(fh);
                     break;
                 }
                 case 1: {
@@ -690,6 +710,10 @@ namespace zsync2 {
 
                     updateAvailable = (zsync_mtime(zs) > appImageStat.st_mtime);
                     break;
+                }
+                default: {
+                    issueStatusMessage("Unknown update method: " + std::to_string(method));
+                    return false;
                 }
             }
 
