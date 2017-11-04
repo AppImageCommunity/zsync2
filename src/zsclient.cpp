@@ -253,12 +253,12 @@ namespace zsync2 {
             // NOTE: fopencookie is a Linux-only solution
             // for other platforms, this will have to be adapted (e.g., using funopen() on BSD)
             cookie_io_functions_t iofuncs = {
-                reinterpret_cast<__ssize_t (*)(void *, char *, size_t)>(gzread),
-                reinterpret_cast<__ssize_t (*)(void *, const char *, size_t)>(gzwrite),
-                reinterpret_cast<int (*)(void *, __off64_t *, int)>(gzseek),
-                reinterpret_cast<int (*)(void *)>(gzclose)
+                [](void* gzf, char* buf, size_t count) { return (long) gzread((gzFile) gzf, buf, (unsigned) count); },
+                [](void* gzf, const char* buf, size_t count) { return (long) gzwrite((gzFile) gzf, buf, (unsigned) count); },
+                [](void* gzf, long* offset, int whence) { return (int) gzseek((gzFile) gzf, (unsigned) *offset, whence); },
+                [](void* gzf) { return gzclose((gzFile) gzf); },
             };
-            return fopencookie(nullptr, "r", iofuncs);
+            return fopencookie(f, "r", iofuncs);
         }
 
         bool readSeedFile(const std::string &pathToSeedFile) {
