@@ -23,6 +23,11 @@ set(ZSYNC2_DEPS ${CPR_LIBRARIES} libzsync)
 set(ZSYNC2_HDRS format_string.h zsutil.h ../include/zsclient.h ../include/zsglobal.h)
 set(ZSYNC2_SRCS zsclient.cpp legacy_http.c legacy_progress.c)
 
+if(APPIMAGEUPDATE_BSD OR APPIMAGEUPDATE_MACOS)
+    list(APPEND ZSYNC2_HDRS fmemopen.h)
+    list(APPEND ZSYNC2_SRCS fmemopen.c)
+endif()
+
 # core library
 add_library(libzsync2 ${ZSYNC2_SRCS})
 # since the target is called libsomething, one doesn't need CMake's additional lib prefix

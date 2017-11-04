@@ -28,6 +28,9 @@ extern "C" {
     #ifdef ZSYNC_STANDALONE
         #include "legacy_progress.h"
     #endif
+    #if defined(APPIMAGEUPDATE_BSD) || defined(APPIMAGEUPDATE_MACOS)
+        #include "fmemopen.h"
+    #endif
 }
 
 namespace zsync2 {
@@ -250,9 +253,7 @@ namespace zsync2 {
                 return nullptr;
 
 #if defined(APPIMAGEUPDATE_LINUX)
-            // map file functions to zlib functions
-            // NOTE: fopencookie is a Linux-only solution
-            // for other platforms, this will have to be adapted (e.g., using funopen() on BSD)
+            // map file functions to zlib functions -- Linux implementation
             cookie_io_functions_t iofuncs = {
                 [](void* gzf, char* buf, size_t count) { return (long) gzread((gzFile) gzf, buf, (unsigned) count); },
                 [](void* gzf, const char* buf, size_t count) { return (long) gzwrite((gzFile) gzf, buf, (unsigned) count); },
@@ -260,7 +261,11 @@ namespace zsync2 {
                 [](void* gzf) { return gzclose((gzFile) gzf); },
             };
             return fopencookie(f, "r", iofuncs);
+#elif defined(APPIMAGEUPDATE_BSD) || defined(APPIMAGEUPDATE_MACOS)
+            // map file functions to zlib functions -- BSD/macOS implementation
+
 #else
+            // for other platforms, this will have to be adapted
 #error TODO: implement openGzFile() for this platform!
 #endif
         }
