@@ -263,10 +263,16 @@ namespace zsync2 {
             return fopencookie(f, "r", iofuncs);
 #elif defined(APPIMAGEUPDATE_BSD) || defined(APPIMAGEUPDATE_MACOS)
             // map file functions to zlib functions -- BSD/macOS implementation
-
+            return funopen(
+                f,
+                [](void* gzf, char* buf, int size) { return (size_t) gzread((gzFile) gzf, buf, (unsigned) size); },
+                [](void* gzf, const char* buf, int size) { return (long) gzwrite((gzFile) gzf, buf, (unsigned) size); },
+                [](void* gzf, fpos_t offset, int whence) { return (fpos_t) gzseek((gzFile) gzf, (unsigned) offset, whence); },
+                [](void* gzf) { return gzclose((gzFile) gzf); }
+            );
 #else
             // for other platforms, this will have to be adapted
-#error TODO: implement openGzFile() for this platform!
+            #error TODO: implement openGzFile() for this platform!
 #endif
         }
 
