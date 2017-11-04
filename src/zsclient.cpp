@@ -249,6 +249,7 @@ namespace zsync2 {
             if (f == nullptr)
                 return nullptr;
 
+#if defined(APPIMAGEUPDATE_LINUX)
             // map file functions to zlib functions
             // NOTE: fopencookie is a Linux-only solution
             // for other platforms, this will have to be adapted (e.g., using funopen() on BSD)
@@ -259,6 +260,9 @@ namespace zsync2 {
                 [](void* gzf) { return gzclose((gzFile) gzf); },
             };
             return fopencookie(f, "r", iofuncs);
+#else
+#error TODO: implement openGzFile() for this platform!
+#endif
         }
 
         bool readSeedFile(const std::string &pathToSeedFile) {
