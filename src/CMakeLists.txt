@@ -27,12 +27,12 @@ set(ZSYNC2_SRCS zsclient.cpp legacy_http.c legacy_progress.c)
 add_library(libzsync2 ${ZSYNC2_SRCS})
 # since the target is called libsomething, one doesn't need CMake's additional lib prefix
 set_target_properties(libzsync2 PROPERTIES PREFIX "")
-target_link_libraries(libzsync2 ${ZSYNC2_DEPS})
+target_link_libraries(libzsync2 PRIVATE ${ZSYNC2_DEPS})
 target_include_directories(libzsync2 PUBLIC ../include)
 
 # core executable
 add_executable(zsync2 main.cpp ${ZSYNC2_SRCS} ${ZSYNC2_HDRS})
-target_link_libraries(zsync2 ${ZSYNC2_DEPS} args)
+target_link_libraries(zsync2 PRIVATE ${ZSYNC2_DEPS} args)
 target_compile_definitions(zsync2 PRIVATE -DZSYNC_STANDALONE)
 
 # install targets
