@@ -1,37 +1,45 @@
 language: cpp
-compiler: gcc
-sudo: require
-dist: trusty
 
-install:
-  # replace existing curl with the PPA one
-  - sudo apt-get -y install git cmake g++ libcurl3-gnutls-dev
+matrix:
+  allow_failures:
+    - os: osx
+  include:
+    - os: linux
+      dist: trusty
+      sudo: required
+      install:
+        - sudo apt-get -y install git cmake g++ libcurl3-gnutls-dev
+      compiler: gcc
+      after_script:
+        - mkdir AppDir
+        - make -j$(nproc) install DESTDIR=AppDir
+        - mkdir -p AppDir/usr/share/{applications,icons/hicolor}
+        - cp ../resources/zsync2.desktop AppDir/usr/share/applications
+        - cp ../resources/zsync2.png AppDir/usr/share/icons/hicolor
+        - wget https://github.com/probonopd/linuxdeployqt/releases/download/continuous/linuxdeployqt-continuous-x86_64.AppImage
+        - chmod +x linuxdeployqt-continuous-x86_64.AppImage
+        - ./linuxdeployqt-continuous-x86_64.AppImage AppDir/usr/share/applications/zsync2.desktop -bundle-non-qt-libs
+        - wget https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage
+        - chmod +x appimagetool-x86_64.AppImage
+        - rm -rf AppDir/usr/include
+        - find AppDir -type f -iname '*.a' -delete
+        - find AppDir -type f -iname 'libssl*.so' -delete
+        - find AppDir -type f -iname 'libcrypt*.so' -delete
+        - ./appimagetool-x86_64.AppImage AppDir zsync2-continuous-x86_64.AppImage -u 'gh-releases-zsync|TheAssassin|zsync2|continuous|zsync2*x86_64.AppImage.zsync'
+        - if [ "$TRAVIS_BRANCH" != "rewrite" ]; then exit 0; fi
+        - ls -lh
+        - wget -c https://github.com/probonopd/uploadtool/raw/master/upload.sh
+        - bash ./upload.sh zsync2*.AppImage
+    - os: osx
+      compiler: clang
+      osx_image: xcode7.2
 
 script:
   - git submodule update --init
   - mkdir build
   - cd build
   - cmake .. -DBUILD_CPR_TESTS=OFF -DUSE_SYSTEM_CURL=ON -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=RelWithDebInfo
-  - mkdir AppDir
-  - make -j$(nproc) install DESTDIR=AppDir
-  - mkdir -p AppDir/usr/share/{applications,icons/hicolor}
-  - cp ../resources/zsync2.desktop AppDir/usr/share/applications
-  - cp ../resources/zsync2.png AppDir/usr/share/icons/hicolor
-  - wget https://github.com/probonopd/linuxdeployqt/releases/download/continuous/linuxdeployqt-continuous-x86_64.AppImage
-  - chmod +x linuxdeployqt-continuous-x86_64.AppImage
-  - ./linuxdeployqt-continuous-x86_64.AppImage AppDir/usr/share/applications/zsync2.desktop -bundle-non-qt-libs
-  - wget https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage
-  - chmod +x appimagetool-x86_64.AppImage
-  - rm -rf AppDir/usr/include
-  - find AppDir -type f -iname '*.a' -delete
-  - find AppDir -type f -iname 'libssl*.so' -delete
-  - find AppDir -type f -iname 'libcrypt*.so' -delete
-  - ./appimagetool-x86_64.AppImage AppDir zsync2-continuous-x86_64.AppImage -u 'gh-releases-zsync|TheAssassin|zsync2|continuous|zsync2*x86_64.AppImage.zsync'
-
-after_success:
-  - ls -lh
-  - wget -c https://github.com/probonopd/uploadtool/raw/master/upload.sh
-  - bash ./upload.sh zsync2*.AppImage*
+  - make -j$(nproc) all
 
 branches:
   except:
