@@ -10,7 +10,7 @@ include(CheckFunctionExists)
 include(CheckIncludeFiles)
 
 # platform checks
-foreach(header inttypes memory stdint stdlib strings sys/stat sys/types unistd)
+foreach(header inttypes memory stdint stdlib strings sys/stat sys/types unistd time)
     string(REPLACE "/" "_" underscore_header "${header}")
     string(TOUPPER ${underscore_header} upper_header)
     check_include_files(${header}.h HAVE_${upper_header})
