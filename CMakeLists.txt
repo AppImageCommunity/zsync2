@@ -37,6 +37,23 @@ configure_file(src/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/config.h)
 # since there's headers in the build directory now, include that as well
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
+# find out which platform we're building for
+if(UNIX)
+    string(TOLOWER "${CMAKE_SYSTEM_NAME}" LOWER_SYSTEM)
+    add_definitions("-DAPPIMAGEUPDATE_UNIX")
+    if(APPLE)
+        add_definitions("-DAPPIMAGEUPDATE_MACOS")
+    elseif("${LOWER_SYSTEM}" MATCHES "bsd")
+        add_definitions("-DAPPIMAGEUPDATE_BSD")
+    elseif("${LOWER_SYSTEM}" MATCHES "linux")
+        add_definitions("-DAPPIMAGEUPDATE_LINUX")
+    else()
+        message(FATAL_ERROR "Unsupported UNIX platform: ${CMAKE_SYSTEM_NAME}")
+    endif()
+else()
+    message(FATAL_ERROR "Unsupported platform: ${CMAKE_SYSTEM_NAME}")
+endif()
+
 # add libraries shipped along with the project
 add_subdirectory(lib)
 
