@@ -13,6 +13,9 @@
 #include <time.h>
 #include <sys/stat.h>
 
+// library headers
+#include <cpr/cpr.h>
+
 namespace zsync2 {
     static inline bool ltrim(std::string &s, char to_trim = ' ') {
         // TODO: find more efficient way to check whether elements have been removed
