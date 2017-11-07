@@ -30,9 +30,35 @@ endforeach()
 # need to add include directory globally because of zsglobal.h
 include_directories(include)
 
+# versioning data
+set(VERSION "2.0.0-alpha-1")
+
+if("$ENV{TRAVIS_BUILD_NUMBER}" STREQUAL "")
+    set(BUILD_NUMBER "<local dev build>")
+else()
+    set(BUILD_NUMBER "$ENV{TRAVIS_BUILD_NUMBER}")
+endif()
+
+# read Git revision ID
+# WARNING: this value will be stored in the CMake cache
+# to update it, you will have to reset the CMake cache
+# (doesn't matter for CI builds like Travis for instance, where there's no permanent CMake cache)
+execute_process(
+    COMMAND git rev-parse --short HEAD
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    OUTPUT_VARIABLE GIT_COMMIT
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
+# get current date
+execute_process(
+        COMMAND env LC_ALL=C date -u "+%Y-%m-%d %H:%M:%S %Z"
+        OUTPUT_VARIABLE BUILD_DATE
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
 # config.h contains some global defines, our config.h.in is a modified version of the upstream config.h.in to make it
 # integrate with CMake
-set(VERSION "2.0.0-alpha-1")
 configure_file(src/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/config.h)
 # since there's headers in the build directory now, include that as well
 include_directories(${CMAKE_CURRENT_BINARY_DIR})

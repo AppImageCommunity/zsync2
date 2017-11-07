@@ -1,6 +1,9 @@
 #define PACKAGE "@PROJECT_NAME@"
 
 #define VERSION "@VERSION@"
+#define BUILD_NUMBER "@BUILD_NUMBER@"
+#define BUILD_DATE "@BUILD_DATE@"
+#define GIT_COMMIT "@GIT_COMMIT@"
 
 /* enable large inode numbers on Mac OS X 10.5 */
 #ifndef _DARWIN_USE_64_BIT_INODE
