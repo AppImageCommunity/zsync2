@@ -40,7 +40,7 @@ namespace zsync2 {
 
     static inline bool isfile(std::string path) {
         std::ifstream ifs(path);
-        return (bool) ifs;
+        return (bool) ifs && ifs.good();
     }
 
     static inline time_t mtime(std::string path) {
@@ -95,7 +95,7 @@ namespace zsync2 {
         return path.substr(0, firstNonAlphaNum);
     }
 
-    inline bool endsWith(std::string const& value, std::string const& ending)
+    static inline bool endsWith(std::string const& value, std::string const& ending)
     {
         if (ending.size() > value.size())
             return false;
