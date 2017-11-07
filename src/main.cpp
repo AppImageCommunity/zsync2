@@ -7,6 +7,7 @@
 
 // local headers
 #include "zsclient.h"
+#include "config.h"
 
 using namespace std;
 
@@ -60,6 +61,12 @@ int main(const int argc, const char** argv) {
         std::cerr << e.what() << std::endl;
         std::cerr << parser;
         return 1;
+    }
+
+    // check whether any flag has been specified which wants the application to exit immediately
+    if (showVersion) {
+        cerr << "zsync2 version " << VERSION << endl;
+        return 0;
     }
 
     if (verbose) {
