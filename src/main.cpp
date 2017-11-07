@@ -99,6 +99,14 @@ int main(const int argc, const char** argv) {
 
     zsync2::ZSyncClient client(pathOrUrl.Get(), outPath);
 
+    // unimplemented flags
+    if (httpInsecureMode)
+        cerr << "Warning: HTTP insecure mode not implemented yet!" << endl;
+    if (quietMode)
+        cerr << "Warning: Quiet/silent mode not implemented yet!" << endl;
+    if (saveZSyncFilePath)
+        cerr << "Warning: -k/--copy-zsync-file-to flag not implemented yet!" << endl;
+
     if (seedFiles) {
         for (const auto &seedFile : seedFiles.Get()) {
             client.addSeedFile(seedFile);
