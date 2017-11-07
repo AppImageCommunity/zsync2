@@ -78,7 +78,12 @@ int main(const int argc, const char** argv) {
         return 2;
     }
 
-    zsync2::ZSyncClient client(pathOrUrl.Get());
+    string outPath;
+
+    if (outputFilename)
+        outPath = outputFilename.Get();
+
+    zsync2::ZSyncClient client(pathOrUrl.Get(), outPath);
 
     if (seedFiles) {
         for (const auto &seedFile : seedFiles.Get()) {
