@@ -6,8 +6,9 @@
 #include <args.hxx>
 
 // local headers
-#include "zsclient.h"
 #include "config.h"
+#include "zsclient.h"
+#include "zsutil.h"
 
 using namespace std;
 
@@ -73,9 +74,22 @@ int main(const int argc, const char** argv) {
         putenv(strdup("CURLOPT_VERBOSE=1"));
     }
 
+    // check wheter path has been given at all
     if (!pathOrUrl) {
         cerr << parser;
         return 2;
+    }
+
+    if (resolveRedirect) {
+        string redirectedUrl;
+
+        if (!zsync2::resolveRedirections(pathOrUrl.Get(), redirectedUrl)) {
+            cerr << "Failed to resolve redirection!" << endl;
+            return 1;
+        }
+
+        cout << redirectedUrl << endl;
+        return 0;
     }
 
     string outPath;
