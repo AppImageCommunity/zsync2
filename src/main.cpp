@@ -111,8 +111,10 @@ int main(const int argc, const char** argv) {
         bool changesAvailable;
 
         // return some non-0/1 error code in case the update check itself fails
-        if (!client.checkForChanges(changesAvailable))
+        if (!client.checkForChanges(changesAvailable)) {
+            cerr << "Failed to check for changes!" << endl;
             return 3;
+        }
 
         if (changesAvailable) {
             cout << "File has changed on the server, update required!" << endl;
