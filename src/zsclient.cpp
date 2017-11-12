@@ -12,6 +12,7 @@
 // library includes
 #include <cpr/cpr.h>
 #include <fcntl.h>
+#include <libgen.h>
 
 extern "C" {
     // temporarily include curl as well until cpr can be used directly
@@ -40,7 +41,7 @@ namespace zsync2 {
         const std::string pathOrUrlToZSyncFile;
         std::string pathToLocalFile;
 
-        struct zsync_state *zsHandle;
+        struct zsync_state* zsHandle;
 
         std::string referer;
 
@@ -49,6 +50,8 @@ namespace zsync2 {
 
         long long localUsed;
         long long httpDown;
+
+        std::string cwd;
 
         // status message variables
 #ifndef ZSYNC_STANDALONE
@@ -61,13 +64,21 @@ namespace zsync2 {
             const std::string& pathToLocalFile,
             bool overwrite
         ) : pathOrUrlToZSyncFile(std::move(pathOrUrlToZSyncFile)), zsHandle(nullptr), state(INITIALIZED),
-                                 localUsed(0), httpDown(0)
-        {
+                                 localUsed(0), httpDown(0) {
             // if the local file should be overwritten, we'll instruct
-            if (overwrite)
+            if (overwrite) {
                 this->pathToLocalFile = pathToLocalFile;
-            else
+            } else {
                 this->seedFiles.insert(pathToLocalFile);
+            }
+
+            // initialize cwd
+            {
+                auto cwdBufSize = 4096;
+                char* cwdBuf = (char*) calloc(4096, sizeof(char));
+                cwd = getcwd(cwdBuf, cwdBufSize);
+                free(cwdBuf);
+            }
         }
         
         ~Private() = default;
@@ -535,6 +546,14 @@ namespace zsync2 {
             return true;
         }
 
+        void applyCwdToPathToLocalFile() {
+            auto oldPath = pathToLocalFile;
+            pathToLocalFile = cwd;
+            if (!endsWith(pathToLocalFile, "/"))
+                pathToLocalFile += "/";
+            pathToLocalFile += oldPath;
+        }
+
         bool run() {
             // exit if run has been called before
             if (state != INITIALIZED) {
@@ -558,6 +577,8 @@ namespace zsync2 {
                 return false;
             }
 
+            applyCwdToPathToLocalFile();
+
             // calculate path to temporary file
             auto tempFilePath = pathToLocalFile + ".part";
 
@@ -575,6 +596,8 @@ namespace zsync2 {
                     issueStatusMessage(tempFilePath + " found, using as seed file");
                     seedFiles.insert(tempFilePath);
                 }
+
+                issueStatusMessage("Target file: " + pathToLocalFile);
 
                 // try to make use of any seed file provided
                 for (const auto &seedFile : seedFiles) {
@@ -597,7 +620,7 @@ namespace zsync2 {
                 issueStatusMessage("Usable data from seed files: " + std::to_string(calculateProgress() * 100.0f) + "%");
             }
 
-            // libzsync has been writing to a randomely-named temp file so far -
+            // libzsync has been writing to a randomly-named temp file so far -
             // because we didn't want to overwrite the .part from previous runs. Now
             // we've read any previous .part, we can replace it with our new
             // in-progress run (which should be a superset of the old .part - unless
@@ -742,6 +765,21 @@ namespace zsync2 {
 
             return true;
         }
+
+        bool setCwd(const std::string& path) {
+            // cwd can be changed until the update is started
+            if (state > INITIALIZED)
+                return false;
+
+            // make path absolute
+            char* realPath;
+            if ((realPath = realpath(path.c_str(), nullptr)) == nullptr)
+                return false;
+
+            cwd = realPath;
+            free(realPath);
+            return true;
+        }
     };
 
     ZSyncClient::ZSyncClient(const std::string pathOrUrlToZSyncFile, const std::string pathToLocalFile, bool overwrite) {
@@ -793,5 +831,9 @@ namespace zsync2 {
 
         path = d->pathToLocalFile;
         return true;
+    }
+
+    bool ZSyncClient::setCwd(const std::string& path) {
+        return d->setCwd(path);
     }
 }

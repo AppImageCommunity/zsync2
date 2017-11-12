@@ -39,5 +39,8 @@ namespace zsync2 {
         // set path to path of new file created by the process
         // returns true when the value is available, false in case the value is not there or there is an error
         bool pathToNewFile(std::string& path);
+        // set directory from where relative filenames should be resolved
+        // can be set only right after initialization
+        bool setCwd(const std::string& path);
     };
 }
