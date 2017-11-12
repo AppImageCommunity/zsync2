@@ -220,6 +220,9 @@ namespace zsync2 {
                 free(p);
                 p = nullptr;
 
+                // check that the filename does not contain any directory prefixes
+                // that might be abused to create files in arbitrary locations, and could be used to put malicious files
+                // in system locations in case ZSync2 is called with administrative permissions
                 if (zsFilename.find('/') != std::string::npos) {
                     issueStatusMessage("rejected filename specified in " + pathOrUrlToZSyncFile + ", contained path component");
                     return false;
