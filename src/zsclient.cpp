@@ -56,10 +56,18 @@ namespace zsync2 {
 #endif
 
     public:
-        Private(std::string pathOrUrlToZSyncFile,
-                std::string pathToLocalFile) : pathOrUrlToZSyncFile(std::move(pathOrUrlToZSyncFile)),
-                                               pathToLocalFile(std::move(pathToLocalFile)),
-                                               zsHandle(nullptr), state(INITIALIZED), localUsed(0), httpDown(0) {
+        Private(
+            std::string pathOrUrlToZSyncFile,
+            const std::string& pathToLocalFile,
+            bool overwrite
+        ) : pathOrUrlToZSyncFile(std::move(pathOrUrlToZSyncFile)), zsHandle(nullptr), state(INITIALIZED),
+                                 localUsed(0), httpDown(0)
+        {
+            // if the local file should be overwritten, we'll instruct
+            if (overwrite)
+                this->pathToLocalFile = pathToLocalFile;
+            else
+                this->seedFiles.insert(pathToLocalFile);
         }
         
         ~Private() = default;
@@ -733,8 +741,8 @@ namespace zsync2 {
         }
     };
 
-    ZSyncClient::ZSyncClient(const std::string pathOrUrlToZSyncFile, const std::string pathToLocalFile) {
-        d = new Private(pathOrUrlToZSyncFile, pathToLocalFile);
+    ZSyncClient::ZSyncClient(const std::string pathOrUrlToZSyncFile, const std::string pathToLocalFile, bool overwrite) {
+        d = new Private(pathOrUrlToZSyncFile, pathToLocalFile, overwrite);
     }
     ZSyncClient::~ZSyncClient() {
         delete d;
@@ -771,5 +779,16 @@ namespace zsync2 {
 
     void ZSyncClient::addSeedFile(const std::string &path) {
         d->seedFiles.insert(path);
+    }
+
+    bool ZSyncClient::pathToNewFile(std::string& path) {
+        if (d->state < d->RUNNING)
+            return false;
+
+        if (d->pathToLocalFile.empty())
+            return false;
+
+        path = d->pathToLocalFile;
+        return true;
     }
 }

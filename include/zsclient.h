@@ -11,7 +11,7 @@ namespace zsync2 {
         Private *d;
 
     public:
-        explicit ZSyncClient(std::string urlOrPathToZsyncFile, std::string pathToLocalFile = "");
+        explicit ZSyncClient(std::string urlOrPathToZsyncFile, std::string pathToLocalFile = "", bool overwrite = true);
         ~ZSyncClient();
 
     public:
@@ -36,5 +36,8 @@ namespace zsync2 {
         bool checkForChanges(bool& updateAvailable, unsigned int method = 0);
         // add seed file that should be searched for usable data during the download process
         void addSeedFile(const std::string& path);
+        // set path to path of new file created by the process
+        // returns true when the value is available, false in case the value is not there or there is an error
+        bool pathToNewFile(std::string& path);
     };
 }
