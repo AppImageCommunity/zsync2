@@ -74,8 +74,8 @@ namespace zsync2 {
 
             // initialize cwd
             {
-                auto cwdBufSize = 4096;
-                char* cwdBuf = (char*) calloc(4096, sizeof(char));
+                size_t cwdBufSize = 4096;
+                auto* cwdBuf = (char*) calloc(4096, sizeof(char));
                 cwd = getcwd(cwdBuf, cwdBufSize);
                 free(cwdBuf);
             }
