@@ -17,11 +17,14 @@ namespace zsync2 {
     public:
         // synchronizes a local file with a remote one based on the information in a zsync file given by URL
         bool run();
+
         // returns progress (double between 0 and 1) that can be used to display progress bars etc.
         double progress();
+
         // fetch next available status message from the application
         // returns true if a message is available and sets passed string, otherwise returns false
         bool nextStatusMessage(std::string& message);
+
         // checks whether a new version is available on the server, i.e., an update is necessary
         // there's several methods available:
         // - method 0: hash local file using SHA-1, download meta information from server, compare to server-side SHA1
@@ -34,11 +37,14 @@ namespace zsync2 {
         // total), false otherwise
         // returns false if update check fails, otherwise true
         bool checkForChanges(bool& updateAvailable, unsigned int method = 0);
+
         // add seed file that should be searched for usable data during the download process
         void addSeedFile(const std::string& path);
+
         // set path to path of new file created by the process
         // returns true when the value is available, false in case the value is not there or there is an error
         bool pathToNewFile(std::string& path);
+
         // set directory from where relative filenames should be resolved
         // can be set only right after initialization
         bool setCwd(const std::string& path);
