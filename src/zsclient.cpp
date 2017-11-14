@@ -53,6 +53,8 @@ namespace zsync2 {
 
         std::string cwd;
 
+        off_t remoteFileSizeCache;
+
         // status message variables
 #ifndef ZSYNC_STANDALONE
         std::deque<std::string> statusMessages;
@@ -64,7 +66,7 @@ namespace zsync2 {
             const std::string& pathToLocalFile,
             bool overwrite
         ) : pathOrUrlToZSyncFile(std::move(pathOrUrlToZSyncFile)), zsHandle(nullptr), state(INITIALIZED),
-                                 localUsed(0), httpDown(0) {
+                                 localUsed(0), httpDown(0), remoteFileSizeCache(-1) {
             // if the local file should be overwritten, we'll instruct
             if (overwrite) {
                 this->pathToLocalFile = pathToLocalFile;
@@ -651,6 +653,7 @@ namespace zsync2 {
             // current name of the file at the same time.
             auto mtime = zsync_mtime(zsHandle);
             tempFilePath = zsync_end(zsHandle);
+            zsHandle = nullptr;
 
             // step 5: replace original file by completed .part file
             if (!pathToLocalFile.empty()) {
@@ -780,6 +783,21 @@ namespace zsync2 {
             free(realPath);
             return true;
         }
+
+        bool remoteFileSize(off_t& fileSize) {
+            if (remoteFileSizeCache < 0) {
+                if (zsHandle == nullptr)
+                    return false;
+
+                remoteFileSizeCache = zsync_filelen(zsHandle);
+            }
+
+            if (remoteFileSizeCache < 0)
+                return false;
+
+            fileSize = remoteFileSizeCache;
+            return true;
+        }
     };
 
     ZSyncClient::ZSyncClient(const std::string pathOrUrlToZSyncFile, const std::string pathToLocalFile, bool overwrite) {
@@ -835,5 +853,9 @@ namespace zsync2 {
 
     bool ZSyncClient::setCwd(const std::string& path) {
         return d->setCwd(path);
+    }
+
+    bool ZSyncClient::remoteFileSize(off_t& fileSize) {
+        return d->remoteFileSize(fileSize);
     }
 }

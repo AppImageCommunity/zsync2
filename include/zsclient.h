@@ -48,5 +48,10 @@ namespace zsync2 {
         // set directory from where relative filenames should be resolved
         // can be set only right after initialization
         bool setCwd(const std::string& path);
+
+        // set fileSize to size of remote file in bytes
+        // returns true if the value is available (i.e., the update has started and the value can be read from the
+        // .zsync file), false otherwise
+        bool remoteFileSize(off_t& fileSize);
     };
 }
