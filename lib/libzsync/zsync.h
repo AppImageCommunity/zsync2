@@ -99,3 +99,8 @@ int zsync_receive_data(struct zsync_receiver* zr, const unsigned char* buf, off_
  * Returns -1 or 1 as per zsync_complete.
  */
 int zsync_sha1(struct zsync_state *zs, int fh);
+
+/* zsync_filelen(self)
+ * Returns remote file length
+ */
+off_t zsync_filelen(struct zsync_state *zs);

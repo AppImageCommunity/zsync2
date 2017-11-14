@@ -114,6 +114,10 @@ struct zsync_state {
     time_t mtime;               /* MTime: from the .zsync, or -1 */
 };
 
+off_t zsync_filelen(struct zsync_state *zs) {
+    return zs->filelen;
+}
+
 static int zsync_read_blocksums(struct zsync_state *zs, FILE * f,
                                 int rsum_bytes, int checksum_bytes,
                                 int seq_matches);
