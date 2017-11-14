@@ -755,6 +755,7 @@ char *zsync_end(struct zsync_state *zs) {
     free(zs->filename);
     free(zs->zfilename);
     free(zs);
+    zs = NULL;
     return f;
 }
 
