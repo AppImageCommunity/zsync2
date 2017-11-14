@@ -823,7 +823,7 @@ namespace zsync2 {
     }
 
     bool ZSyncClient::pathToNewFile(std::string& path) {
-        if (d->state < d->RUNNING)
+        if (d->state <= d->RUNNING)
             return false;
 
         if (d->pathToLocalFile.empty())
