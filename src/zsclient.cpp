@@ -665,6 +665,18 @@ namespace zsync2 {
                     // error check unnecessary -- failures will be checked for in the next part
                     unlink(oldFileBackup.c_str());
 
+                    // copy permissions from old file
+                    mode_t newPerms;
+                    auto errCode = getPerms(pathToLocalFile, newPerms);
+
+                    if (errCode != 0) {
+                        std::ostringstream oss;
+                        oss << "Failed to copy permissions to new file: " << strerror(errCode);
+                        issueStatusMessage(oss.str());
+                    } else {
+                        chmod(tempFilePath.c_str(), newPerms);
+                    }
+
                     if (link(pathToLocalFile.c_str(), oldFileBackup.c_str()) != 0) {
                         issueStatusMessage("Unable to backup " + pathToLocalFile + " to " + oldFileBackup);
                         ok = false;
