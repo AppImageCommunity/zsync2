@@ -121,4 +121,16 @@ namespace zsync2 {
         redirectedUrl = response.url;
         return true;
     }
+
+    static int32_t getPerms(const std::string& path, mode_t& permissions) {
+        // check existing permissions
+        struct stat appImageStat;
+
+        if (stat(path.c_str(), &appImageStat) != 0) {
+            return errno;
+        }
+
+        permissions = appImageStat.st_mode;
+        return 0;
+    };
 }
