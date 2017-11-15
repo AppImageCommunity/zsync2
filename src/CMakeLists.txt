@@ -19,7 +19,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_BINARY_DI
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 set(ZSYNC2_DEPS ${CPR_LIBRARIES} libzsync)
-set(ZSYNC2_HDRS format_string.h zsutil.h ../include/zsclient.h ../include/zsglobal.h)
+set(ZSYNC2_HDRS format_string.h ../include/zsutil.h ../include/zsclient.h ../include/zsglobal.h)
 set(ZSYNC2_SRCS zsclient.cpp legacy_http.c legacy_progress.c)
 
 # core library
