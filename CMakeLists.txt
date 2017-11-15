@@ -28,7 +28,7 @@ foreach(function fseeko getaddrinfo memcpy mkstemp pread pwrite)
 endforeach()
 
 # need to add include directory globally because of zsglobal.h
-include_directories(include)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 # versioning data
 set(VERSION "2.0.0-alpha-1")
