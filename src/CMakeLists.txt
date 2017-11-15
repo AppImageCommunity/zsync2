@@ -19,7 +19,12 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_BINARY_DI
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 set(ZSYNC2_DEPS ${CPR_LIBRARIES} libzsync)
-set(ZSYNC2_HDRS format_string.h ../include/zsutil.h ../include/zsclient.h ../include/zsglobal.h)
+set(ZSYNC2_HDRS
+    format_string.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include/zsutil.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include/zsclient.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include/zsglobal.h
+)
 set(ZSYNC2_SRCS zsclient.cpp legacy_http.c legacy_progress.c)
 
 # core library
@@ -27,10 +32,14 @@ add_library(libzsync2 ${ZSYNC2_SRCS})
 # since the target is called libsomething, one doesn't need CMake's additional lib prefix
 set_target_properties(libzsync2 PROPERTIES PREFIX "")
 target_link_libraries(libzsync2 PRIVATE ${ZSYNC2_DEPS})
-target_include_directories(libzsync2 PUBLIC ../include)
+target_include_directories(libzsync2 PUBLIC
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
+)
 
 # core executable
-add_executable(zsync2 main.cpp ${ZSYNC2_SRCS} ${ZSYNC2_HDRS})
+add_executable(zsync2 ${ZSYNC2_SRCS} ${ZSYNC2_HDRS} main.cpp)
+target_include_directories(zsync2 PRIVATE ${PROJECT_SOURCE_DIR}/include)
 target_link_libraries(zsync2 PRIVATE ${ZSYNC2_DEPS} args)
 target_compile_definitions(zsync2 PRIVATE -DZSYNC_STANDALONE)
 
