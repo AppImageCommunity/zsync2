@@ -15,7 +15,9 @@ set_target_properties(libzsync PROPERTIES PREFIX "")
 target_link_libraries(libzsync z librcksum)
 
 # declare includes
-target_include_directories(libzsync PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(libzsync PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+)
 
 # add tests
 add_executable(sha1test sha1.c sha1test.c)
