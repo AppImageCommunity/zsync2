@@ -47,6 +47,8 @@ int main(const int argc, const char** argv) {
         {'o', "output"}
     );
 
+    args::Flag forceUpdate(parser, "", "Skip update check and force update", {"force-update"});
+
     args::Flag quietMode(parser, "", "Quiet mode", {'s', 'q', "silent-mode"});
     args::Flag verbose(parser, "", "Switch on verbose mode", {'v', "verbose"});
     args::Flag showVersion(parser, "", "Print version and exit", {'V', "version"});
@@ -109,13 +111,7 @@ int main(const int argc, const char** argv) {
     if (saveZSyncFilePath)
         cerr << "Warning: -k/--copy-zsync-file-to flag not implemented yet!" << endl;
 
-    if (seedFiles) {
-        for (const auto &seedFile : seedFiles.Get()) {
-            client.addSeedFile(seedFile);
-        }
-    }
-
-    if (checkForChanges) {
+    if (checkForChanges || !forceUpdate) {
         cout << "Checking for changes..." << endl;
 
         bool changesAvailable;
@@ -127,11 +123,19 @@ int main(const int argc, const char** argv) {
         }
 
         if (changesAvailable) {
-            cout << "File has changed on the server, update required!" << endl;
-            return 1;
+            if (checkForChanges) {
+                cout << "File has changed on the server, update required." << endl;
+                return 1;
+            }
         } else {
-            cout << "No changes detected, file is up to date!" << endl;
+            cout << "No changes detected, file is up to date." << endl;
             return 0;
+        }
+    }
+
+    if (seedFiles) {
+        for (const auto &seedFile : seedFiles.Get()) {
+            client.addSeedFile(seedFile);
         }
     }
 
