@@ -2,7 +2,7 @@
  * zsync2
  * ======
  *
- * zsutil.h: Header-only utility library.
+ * zsutil.h: utility library.
  */
 
 #pragma once
@@ -41,12 +41,12 @@ namespace zsync2 {
         return rtrim(s, to_trim) && ltrim_result;
     }
 
-    static inline bool isfile(std::string path) {
+    static inline bool isfile(const std::string& path) {
         std::ifstream ifs(path);
         return (bool) ifs && ifs.good();
     }
 
-    static inline time_t mtime(std::string path) {
+    static inline time_t mtime(const std::string& path) {
         struct stat fstat;
 
         if (stat(path.c_str(), &fstat) == 0) {
@@ -61,7 +61,7 @@ namespace zsync2 {
         return string;
     }
 
-    static inline bool isUrlAbsolute(const std::string url) {
+    static inline bool isUrlAbsolute(const std::string& url) {
         static const char special[] = { ":/?" };
 
         auto firstSpecial = url.find_first_of(special);
