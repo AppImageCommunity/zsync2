@@ -22,9 +22,6 @@ script:
   - wget https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage
   - chmod +x appimagetool-x86_64.AppImage
   - rm -rf AppDir/usr/include
-  - find AppDir -type f -iname '*.a' -delete
-  - find AppDir -type f -iname 'libssl*.so' -delete
-  - find AppDir -type f -iname 'libcrypt*.so' -delete
   - ./appimagetool-x86_64.AppImage AppDir zsync2-continuous-x86_64.AppImage -u 'gh-releases-zsync|TheAssassin|zsync2|continuous|zsync2*x86_64.AppImage.zsync'
 
 after_success:
