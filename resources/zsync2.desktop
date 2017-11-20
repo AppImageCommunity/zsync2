@@ -4,3 +4,4 @@ Type=Application
 Terminal=true
 Icon=zsync2
 Exec=zsync2
+Categories=Network;
