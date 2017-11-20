@@ -53,5 +53,8 @@ namespace zsync2 {
         // returns true if the value is available (i.e., the update has started and the value can be read from the
         // .zsync file), false otherwise
         bool remoteFileSize(off_t& fileSize);
+
+        // set path in which the .zsync file should be stored when downloaded first
+        void storeZSyncFileInPath(const std::string& path);
     };
 }

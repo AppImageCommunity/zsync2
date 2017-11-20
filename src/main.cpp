@@ -109,7 +109,7 @@ int main(const int argc, const char** argv) {
     if (quietMode)
         cerr << "Warning: Quiet/silent mode not implemented yet!" << endl;
     if (saveZSyncFilePath)
-        cerr << "Warning: -k/--copy-zsync-file-to flag not implemented yet!" << endl;
+        client.storeZSyncFileInPath(saveZSyncFilePath.Get());
 
     if (checkForChanges || !forceUpdate) {
         cout << "Checking for changes..." << endl;

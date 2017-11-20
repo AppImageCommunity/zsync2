@@ -12,11 +12,9 @@
 // library includes
 #include <cpr/cpr.h>
 #include <fcntl.h>
-#include <libgen.h>
 
 extern "C" {
     // temporarily include curl as well until cpr can be used directly
-    #include <curl/curl.h>
     #include <zsync.h>
     #include <zlib.h>
 }
@@ -40,6 +38,7 @@ namespace zsync2 {
         
         const std::string pathOrUrlToZSyncFile;
         std::string pathToLocalFile;
+        std::string pathToStoreZSyncFileInLocally;
 
         struct zsync_state* zsHandle;
 
@@ -208,6 +207,40 @@ namespace zsync2 {
             if ((zs = zsync_begin(f, headersOnly ? 1 : 0)) == nullptr) {
                 issueStatusMessage("Failed to parse .zsync file!");
                 return nullptr;
+            }
+
+            // store copy of .zsync file locally, if specified
+            if (!pathToStoreZSyncFileInLocally.empty()) {
+                std::ofstream ofs(pathToStoreZSyncFileInLocally);
+                auto error = errno;
+
+                if (!ofs) {
+                    issueStatusMessage(
+                        "Warning: could not store copy of .zsync file in path: " +
+                        std::string(strerror(error))
+                    );
+                }
+
+                std::ostringstream oss;
+                oss << "Storing copy of .zsync file in " << pathToStoreZSyncFileInLocally << ", as requested";
+                issueStatusMessage(oss.str());
+
+                // make sure we start at the beginning of the file
+                rewind(f);
+
+                // prepare buffer
+                constexpr size_t bufsize = 4096;
+                std::vector<char> copyBuf;
+                copyBuf.resize(bufsize);
+
+                // read buffers and write data to file
+                size_t bytesRead = 0;
+                while ((bytesRead = fread(&copyBuf[0], sizeof(char), bufsize, f)) > 0) {
+                    ofs.write(copyBuf.data(), bytesRead);
+                }
+
+                // reset file offset
+                rewind(f);
             }
 
             if (fclose(f) != 0) {
@@ -869,5 +902,9 @@ namespace zsync2 {
 
     bool ZSyncClient::remoteFileSize(off_t& fileSize) {
         return d->remoteFileSize(fileSize);
+    }
+
+    void ZSyncClient::storeZSyncFileInPath(const std::string& path) {
+        d->pathToStoreZSyncFileInLocally = path;
     }
 }
