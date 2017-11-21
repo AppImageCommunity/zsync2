@@ -98,8 +98,8 @@ int main(const int argc, const char** argv) {
 
     // redirect cout/cerr to /dev/null in quiet mode
     if (quietMode) {
-        freopen("/dev/null","a",stdout);
-        freopen("/dev/null","a",stderr);
+        freopen("/dev/null", "a", stdout);
+        freopen("/dev/null", "a", stderr);
     }
 
     string outPath;
