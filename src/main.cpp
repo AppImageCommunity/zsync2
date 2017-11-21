@@ -96,6 +96,12 @@ int main(const int argc, const char** argv) {
         return 0;
     }
 
+    // redirect cout/cerr to /dev/null in quiet mode
+    if (quietMode) {
+        freopen("/dev/null","a",stdout);
+        freopen("/dev/null","a",stderr);
+    }
+
     string outPath;
 
     if (outputFilename)
@@ -106,8 +112,6 @@ int main(const int argc, const char** argv) {
     // unimplemented flags
     if (httpInsecureMode)
         cerr << "Warning: HTTP insecure mode not implemented yet!" << endl;
-    if (quietMode)
-        cerr << "Warning: Quiet/silent mode not implemented yet!" << endl;
     if (saveZSyncFilePath)
         client.storeZSyncFileInPath(saveZSyncFilePath.Get());
 
@@ -134,7 +138,7 @@ int main(const int argc, const char** argv) {
     }
 
     if (seedFiles) {
-        for (const auto &seedFile : seedFiles.Get()) {
+        for (const auto& seedFile : seedFiles.Get()) {
             client.addSeedFile(seedFile);
         }
     }
