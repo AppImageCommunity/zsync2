@@ -112,6 +112,7 @@ int main(const int argc, const char** argv) {
     // unimplemented flags
     if (httpInsecureMode)
         cerr << "Warning: HTTP insecure mode not implemented yet!" << endl;
+
     if (saveZSyncFilePath)
         client.storeZSyncFileInPath(saveZSyncFilePath.Get());
 
