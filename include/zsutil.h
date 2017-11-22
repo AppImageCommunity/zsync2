@@ -46,7 +46,7 @@ namespace zsync2 {
         return (bool) ifs && ifs.good();
     }
 
-    static inline time_t mtime(const std::string& path) {
+    static inline time_t readMtime(const std::string& path) {
         struct stat fstat;
 
         if (stat(path.c_str(), &fstat) == 0) {
