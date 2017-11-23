@@ -17,7 +17,7 @@ add_subdirectory(cpr)
 
 # it's quite simple dealing with the args library directly from CMake
 add_library(args INTERFACE)
-target_sources(args INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/args/args.hxx)
+target_sources(args INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/args/args.hxx")
 target_include_directories(args INTERFACE args)
 
 # Google Test framework
