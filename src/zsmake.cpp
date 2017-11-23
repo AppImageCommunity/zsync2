@@ -295,4 +295,8 @@ namespace zsync2 {
 
         return true;
     }
+
+    void ZSyncFileMaker::setUrl(const std::string& url) {
+        d->url = url;
+    }
 }

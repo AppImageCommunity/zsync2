@@ -28,6 +28,10 @@ namespace zsync2 {
         // create file and store data in it
         bool saveZSyncFile(std::string outFilePath = "");
 
+        // sets an absolute or relative URL to the target file, seen from the future location of the .zsync file on
+        // the server
+        void setUrl(const std::string& url);
+
         // will be called for every log message issued by the code
         bool setLogMessageCallback(std::function<void(std::string)> callback);
     };

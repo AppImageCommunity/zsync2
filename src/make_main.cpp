@@ -57,7 +57,7 @@ int main(int argc, char** argv) {
 
     // validate parameters
     if(updateUrl) {
-//        maker.setUrl(updateUrl.Get());
+        maker.setUrl(updateUrl.Get());
     }
 
     if(!isfile(fileName.Get())) {
