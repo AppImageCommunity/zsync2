@@ -19,8 +19,8 @@ int main(int argc, char** argv) {
 
     args::HelpFlag help(parser, "help", "Displays this help text", {'h', "help"});
 
-    args::ValueFlag<string> updateUrl(parser,
-        "url", "URL the .zsync file should point to (may be relative)",
+    args::ValueFlag<string> updateUrl(parser, "url",
+        "URL the .zsync file should point to (may be relative)",
         {'u', "url"}
     );
 
