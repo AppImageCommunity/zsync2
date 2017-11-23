@@ -26,7 +26,6 @@ set(ZSYNC2_HDRS
     ${PROJECT_SOURCE_DIR}/include/zsclient.h
     ${PROJECT_SOURCE_DIR}/include/zsglobal.h
     ${PROJECT_SOURCE_DIR}/include/zsmake.h
-    ../other.bak/zsfile.h
 )
 set(ZSYNC2_SRCS zsclient.cpp legacy_http.c legacy_progress.c zsmake.cpp)
 
