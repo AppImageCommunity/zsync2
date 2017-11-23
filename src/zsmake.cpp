@@ -291,6 +291,11 @@ namespace zsync2 {
             data = oss.str();
             return true;
         }
+
+        bool addCustomHeaderField(const std::string& key, const std::string& value) {
+            auto rv = (customHeaderFields.find(key) != customHeaderFields.end());
+            customHeaderFields[key] = key;
+        }
     };
 
     ZSyncFileMaker::ZSyncFileMaker(const std::string& filename) {
@@ -340,5 +345,13 @@ namespace zsync2 {
 
     bool ZSyncFileMaker::setLogMessageCallback(std::function<void(std::string)> callback) {
         d->logMessage = std::move(callback);
+    }
+
+    bool ZSyncFileMaker::addCustomHeaderField(const std::string& key, const std::string& value) {
+        return d->addCustomHeaderField(key, value);
+    }
+
+    std::map<std::string, std::string> ZSyncFileMaker::getCustomHeaderFields() {
+        return d->customHeaderFields;
     }
 }
