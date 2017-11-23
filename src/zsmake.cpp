@@ -36,7 +36,7 @@ namespace zsync2 {
 
         long length;
         int checksumLength;
-        int rsumLength;
+        int rSumLength;
         int seqMatches;
 
         buffer_t blockSums;
@@ -48,7 +48,7 @@ namespace zsync2 {
                                                     length(0),
                                                     checksumLength(0),
                                                     blockSize(0),
-                                                    rsumLength(0),
+                                                    rSumLength(0),
                                                     seqMatches(0)
         {
             // make sure to use the filename only
@@ -57,6 +57,9 @@ namespace zsync2 {
                 fileName = path;
             else
                 fileName = path.substr(slashPos + 1, path.length());
+
+            // should be created in the current working directory unless specified otherwise
+            zSyncFilePath = fileName + ".zsync";
 
             // initialize URL with file name
             // though, it should be set to the real URL
@@ -154,13 +157,13 @@ namespace zsync2 {
 
             // decide how long a rsum hash and checksum hash per block we need for this file
             seqMatches = (length > blockSize) ? 2 : 1;
-            rsumLength = static_cast<int>(ceil(((log(length) + log(blockSize)) / log(2) - 8.6) / seqMatches / 8));
+            rSumLength = static_cast<int>(ceil(((log(length) + log(blockSize)) / log(2) - 8.6) / seqMatches / 8));
 
             // apply limits
-            if (rsumLength > 4)
-                rsumLength = 4;
-            else if (rsumLength < 2)
-                rsumLength = 2;
+            if (rSumLength > 4)
+                rSumLength = 4;
+            else if (rSumLength < 2)
+                rSumLength = 2;
 
             // calculate two different checksum lengths and pick the maximum
             checksumLength = static_cast<int>(ceil((20 + (log(length) + log(1 + length / blockSize)) / log(2)) / seqMatches / 8));
@@ -168,10 +171,6 @@ namespace zsync2 {
                 auto checksumLength2 = static_cast<int>((7.9 + (20 + log(1 + length / blockSize) / log(2))) / 8);
                 if (checksumLength < checksumLength2)
                     checksumLength = checksumLength2;
-            }
-
-            if (zSyncFilePath.empty()) {
-                zSyncFilePath = path + ".zsync";
             }
 
             // calculate SHA-1 hash sum
@@ -207,7 +206,7 @@ namespace zsync2 {
             headerFields["SHA-1"] = fileSHA1Hash;
 
             std::ostringstream hashLengths;
-            hashLengths << seqMatches << "," << rsumLength << "," << checksumLength;
+            hashLengths << seqMatches << "," << rSumLength << "," << checksumLength;
             headerFields["Hash-Lengths"] = hashLengths.str();
 
             // now, create .zsync file
@@ -249,7 +248,7 @@ namespace zsync2 {
                 };
 
                 while (readChunk() > 0) {
-                    std::copy(buffer.begin() + 4 - rsumLength, buffer.begin() + 4, std::ostream_iterator<char>(oss));
+                    std::copy(buffer.begin() + 4 - rSumLength, buffer.begin() + 4, std::ostream_iterator<char>(oss));
                     std::copy(buffer.begin() + 4, buffer.begin() + 4 + checksumLength, std::ostream_iterator<char>(oss));
                 }
             }
@@ -277,5 +276,23 @@ namespace zsync2 {
 
     void ZSyncFileMaker::setBlockSize(uint32_t blockSize) {
         d->blockSize = blockSize;
+    }
+
+    bool ZSyncFileMaker::saveZSyncFile(std::string outFilePath) {
+        if (outFilePath.empty())
+            outFilePath = d->zSyncFilePath;
+
+        std::ofstream ofs(outFilePath);
+
+        if (!ofs)
+            return false;
+
+        std::string data;
+        if (!dump(data))
+            return false;
+
+        ofs << data;
+
+        return true;
     }
 }

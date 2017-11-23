@@ -26,7 +26,7 @@ namespace zsync2 {
         bool calculateBlockSums();
 
         // create file and store data in it
-        bool saveFile();
+        bool saveZSyncFile(std::string outFilePath = "");
 
         // will be called for every log message issued by the code
         bool setLogMessageCallback(std::function<void(std::string)> callback);
