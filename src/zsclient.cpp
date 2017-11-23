@@ -428,7 +428,6 @@ namespace zsync2 {
             int ret = 0;
 
             struct range_fetch* rf;
-            unsigned char* buf = nullptr;
             struct zsync_receiver* zr;
 
             // URL might be relative -- we need an absolute URL to do a fetch
@@ -465,11 +464,14 @@ namespace zsync2 {
             issueStatusMessage("Downloading from " + redirectedUrl);
 
             /* Create a read buffer */
-            buf = static_cast<unsigned char *>(malloc(BUFFERSIZE));
-            if (buf == nullptr) {
+            std::vector<unsigned char> buffer;
+            try {
+                buffer.reserve(BUFFERSIZE);
+            } catch (std::bad_alloc& e) {
+                // finish available data, then re-throw
                 zsync_end_receive(zr);
                 range_fetch_end(rf);
-                return -1;
+                throw;
             }
 
             {   /* Get a set of byte ranges that we need to complete the target */
@@ -503,10 +505,10 @@ namespace zsync2 {
 
                         /* Loop while we're receiving data, until we're done or there is an error */
                         while (!ret
-                               && (len = get_range_block(rf, &zoffset, buf, BUFFERSIZE)) > 0) {
+                               && (len = get_range_block(rf, &zoffset, buffer.data(), BUFFERSIZE)) > 0) {
                             /* Pass received data to the zsync receiver, which writes it to the
                              * appropriate location in the target file */
-                            if (zsync_receive_data(zr, buf, zoffset, len) != 0)
+                            if (zsync_receive_data(zr, buffer.data(), zoffset, len) != 0)
                                 ret = 1;
 
                             #ifdef ZSYNC_STANDALONE
@@ -541,7 +543,6 @@ namespace zsync2 {
             }
 
             /* Clean up */
-            free(buf);
             httpDown += range_fetch_bytes_down(rf);
             zsync_end_receive(zr);
             range_fetch_end(rf);
