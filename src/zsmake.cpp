@@ -339,6 +339,6 @@ namespace zsync2 {
     }
 
     bool ZSyncFileMaker::setLogMessageCallback(std::function<void(std::string)> callback) {
-        d->logMessage = callback;
+        d->logMessage = std::move(callback);
     }
 }
