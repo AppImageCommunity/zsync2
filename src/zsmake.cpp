@@ -1,6 +1,7 @@
 // system headers
 #include <arpa/inet.h>
 #include <iomanip>
+#include <iostream>
 #include <iterator>
 #include <sstream>
 #include <unordered_map>
@@ -43,6 +44,8 @@ namespace zsync2 {
 
         headerFields_t customHeaderFields;
 
+        std::function<void(std::string)> logMessage;
+
     public:
         explicit Private(const std::string& path) : path(path),
                                                     length(0),
@@ -61,9 +64,10 @@ namespace zsync2 {
             // should be created in the current working directory unless specified otherwise
             zSyncFilePath = fileName + ".zsync";
 
-            // initialize URL with file name
-            // though, it should be set to the real URL
-            url = fileName;
+            // by default, log to stderr
+            logMessage = [](std::string message) {
+                std::cerr << message << std::endl;
+            };
         }
 
         ~Private() = default;
@@ -77,14 +81,17 @@ namespace zsync2 {
                 struct tm mtime_tm;
 
                 if(gmtime_r(&mtime, &mtime_tm) != nullptr) {
-                    if(strftime(buffer, sizeof(buffer), "%a, %d %b %Y %H:%M:%S %z", &mtime_tm) <= 0)
+                    if(strftime(buffer, sizeof(buffer), "%a, %d %b %Y %H:%M:%S %z", &mtime_tm) <= 0) {
+                        logMessage("Failed to format mtime string!");
                         return false;
+                    }
 
                     headerFields.insert(std::make_pair("MTime", buffer));
                     return true;
                 }
             }
 
+            logMessage("Failed to read mtime for file " + path + "!");
             return false;
         }
 
@@ -129,7 +136,15 @@ namespace zsync2 {
                     writeBlockSums(buffer, bytesRead);
                     length += bytesRead;
                 } else {
-                    // TODO: check for stream error and display error message
+                    auto error = errno;
+
+                    std::string messagePrefix = "Failed to calculate block sums: ";
+
+                    if (inFile.fail())
+                        logMessage(messagePrefix + strerror(error));
+                    else
+                        logMessage(messagePrefix + "unknown error: " + strerror(error));
+
                     return false;
                 }
             }
@@ -145,8 +160,10 @@ namespace zsync2 {
             SHA1Init(&sha1Ctx);
 
             std::ifstream ifs(path);
-            if (!ifs)
+            if (!ifs) {
+
                 return false;
+            }
 
             if (blockSize == 0)
                 blockSize = (ifs.tellg() < 100000000) ? 2048 : 4096;
@@ -201,6 +218,24 @@ namespace zsync2 {
 
             headerFields["Blocksize"] = std::to_string(blockSize);
             headerFields["Length"] = std::to_string(length);
+
+
+            if (url.empty()) {
+                logMessage(
+                    "No URL given, so I am including a relative URL in the .zsync file - you must keep the file "
+                    "being served and the .zsync in the same public directory. Use -u " + path + " to get "
+                    "this same result without this warning."
+                );
+                url = fileName;
+            }
+
+            if (!isUrlAbsolute(url)) {
+                logMessage(
+                    "Warning: the given URL is relative. Please make sure the files are placed correctly on "
+                    "the server, otherwise zsync2 won't be able to resolve the path to the target file, requiring "
+                    "the user to specify this URL on the command line (using the -u flag)."
+                );
+            }
 
             headerFields["URL"] = url;
             headerFields["SHA-1"] = fileSHA1Hash;
@@ -283,9 +318,12 @@ namespace zsync2 {
             outFilePath = d->zSyncFilePath;
 
         std::ofstream ofs(outFilePath);
+        auto error = errno;
 
-        if (!ofs)
+        if (!ofs) {
+            d->logMessage("Failed to open output file " + outFilePath + ": " + strerror(error));
             return false;
+        }
 
         std::string data;
         if (!dump(data))
@@ -298,5 +336,9 @@ namespace zsync2 {
 
     void ZSyncFileMaker::setUrl(const std::string& url) {
         d->url = url;
+    }
+
+    bool ZSyncFileMaker::setLogMessageCallback(std::function<void(std::string)> callback) {
+        d->logMessage = callback;
     }
 }
