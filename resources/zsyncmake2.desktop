@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=zsyncmake2
+Type=Application
+Terminal=true
+Icon=zsync2
+Exec=zsyncmake2
+Categories=Network;
