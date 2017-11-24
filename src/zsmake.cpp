@@ -59,10 +59,7 @@ namespace zsync2 {
             if ((slashPos = path.find_last_of('/')) == std::string::npos)
                 fileName = path;
             else
-                fileName = path.substr(
-                    slashPos + 1,
-                    static_cast<unsigned long>(std::distance(path.begin() + slashPos + 1, path.end()))
-                );
+                fileName = path.substr(slashPos + 1, path.size() - slashPos - 1);
 
             // should be created in the current working directory unless specified otherwise
             zSyncFilePath = fileName + ".zsync";
