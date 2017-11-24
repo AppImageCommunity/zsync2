@@ -294,7 +294,7 @@ namespace zsync2 {
 
         bool addCustomHeaderField(const std::string& key, const std::string& value) {
             auto rv = (customHeaderFields.find(key) != customHeaderFields.end());
-            customHeaderFields[key] = key;
+            customHeaderFields[key] = value;
         }
     };
 
