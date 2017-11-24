@@ -36,7 +36,7 @@ mkdir -p AppDir
 make -j$(nproc) install DESTDIR=AppDir
 
 # install resources into AppDir
-mkdir -p AppDir/usr/share/{applications,icons/hicolor/scalable/apps/} AppDir/resources
+mkdir -p AppDir/usr/share/{applications,icons/hicolor/256x256/apps/} AppDir/resources
 cp -v "$REPO_ROOT"/resources/*.desktop AppDir/usr/share/applications/
 cp -v "$REPO_ROOT"/resources/*.png AppDir/usr/share/icons/hicolor/256x256/apps/
 
