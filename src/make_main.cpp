@@ -32,6 +32,11 @@ int main(int argc, char** argv) {
         "either 2048 or 4096 depending on file size) - so normally you should not need to override the default.",
         {'b', "blocksize"});
 
+    args::ValueFlagList<std::string> customHeaderFields(parser, "key=value",
+        "",
+        {'c', "custom-header"}
+    );
+
     args::Positional<string> fileName(parser, "filename",
         "Name of the file which a .zsync file should be generated for."
     );
@@ -67,6 +72,23 @@ int main(int argc, char** argv) {
 
     if (blockSize)
         maker.setBlockSize(blockSize.Get());
+
+    if (customHeaderFields) {
+        for (std::string& field : customHeaderFields.Get()) {
+            // verify syntax "key=value..."
+            size_t equalSignPos;
+
+            if ((equalSignPos = field.find_first_of('=')) == std::string::npos)
+                cerr << "Discarding invalid header field \"" + field + "\": syntax error" << endl;
+
+            auto key = field.substr(0, equalSignPos);
+            auto value = field.substr(equalSignPos + 1, field.size() - equalSignPos - 1);
+
+            maker.addCustomHeaderField(key, value);
+
+            cerr << "Adding custom header field: " << field << endl;
+        }
+    }
 
     if (!maker.calculateBlockSums()) {
         cerr << "Failed to calculate block sums!" << endl;
