@@ -13,7 +13,7 @@ script:
 after_success:
   - ls -lh
   - wget -c https://github.com/probonopd/uploadtool/raw/master/upload.sh
-  - bash ./upload.sh zsync2*.AppImage*
+  - bash ./upload.sh zsync*2*.AppImage*
 
 branches:
   except:
