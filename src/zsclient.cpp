@@ -12,6 +12,7 @@
 // library includes
 #include <cpr/cpr.h>
 #include <fcntl.h>
+#include <libgen.h>
 
 extern "C" {
     // temporarily include curl as well until cpr can be used directly
@@ -204,7 +205,7 @@ namespace zsync2 {
                 f = fmemopen(buffer.data(), buffer.size(), "r");
             }
 
-            if ((zs = zsync_begin(f, headersOnly ? 1 : 0)) == nullptr) {
+            if ((zs = zsync_begin(f, (headersOnly ? 1 : 0), (cwd.empty() ? nullptr : cwd.c_str()))) == nullptr) {
                 issueStatusMessage("Failed to parse .zsync file!");
                 return nullptr;
             }
@@ -613,6 +614,7 @@ namespace zsync2 {
                 return false;
             }
 
+            // make sure new file will be created in the same directory as the original file
             applyCwdToPathToLocalFile();
 
             // calculate path to temporary file
@@ -663,10 +665,10 @@ namespace zsync2 {
             // the content changed, in which case it still contains anything relevant
             // from the old .part).
             issueStatusMessage("Renaming temp file");
-             if (zsync_rename_file(zsHandle, tempFilePath.c_str()) != 0) {
-                 state = DONE;
-                 return false;
-             }
+            if (zsync_rename_file(zsHandle, tempFilePath.c_str()) != 0) {
+                state = DONE;
+                return false;
+            }
 
             // step 3: fetch remaining blocks via the URLs from the .zsync
             issueStatusMessage("Fetching remaining blocks");

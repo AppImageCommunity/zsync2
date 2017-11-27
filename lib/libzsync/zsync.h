@@ -17,7 +17,7 @@ struct zsync_state;
 
 /* zsync_begin - load a zsync file and return data structure to use for the rest of the process.
  */
-struct zsync_state* zsync_begin(FILE* cf, int headersOnly);
+struct zsync_state* zsync_begin(FILE* cf, int headersOnly, const char* target_dir);
 
 /* zsync_hint_decompress - if it returns non-zero, this suggests that 
  *  compressed seed files should be decompressed */

@@ -37,7 +37,8 @@
  */
 struct rcksum_state *rcksum_init(zs_blockid nblocks, size_t blocksize,
                                  int rsum_bytes, int checksum_bytes,
-                                 int require_consecutive_matches) {
+                                 int require_consecutive_matches,
+                                 char* directory) {
     /* Allocate memory for the object */
     struct rcksum_state *rs = malloc(sizeof(struct rcksum_state));
     if (rs == NULL) return NULL;
@@ -54,7 +55,15 @@ struct rcksum_state *rcksum_init(zs_blockid nblocks, size_t blocksize,
     rs->context = blocksize * require_consecutive_matches;
 
     /* Temporary file to hold the target file as we get blocks for it */
-    rs->filename = strdup("rcksum-XXXXXX");
+    static const char template[] = "rcksum-XXXXXX";
+    if (directory != NULL) {strdup("rcksum-XXXXXX");
+        rs->filename = (char*) calloc(strlen(directory) + strlen(template) + 2, sizeof(char));
+        strcat(rs->filename, directory);
+        strcat(rs->filename, "/");
+        strcat(rs->filename, template);
+    } else {
+        rs->filename = strdup(template);
+    }
 
     /* Initialise to 0 various state & stats */
     rs->gotblocks = 0;

@@ -112,6 +112,9 @@ struct zsync_state {
     char *gzhead;               /* And this is the header of the gzip file (for the mtime) */
 
     time_t mtime;               /* MTime: from the .zsync, or -1 */
+
+    /* directory to create */
+    char *target_dir;
 };
 
 off_t zsync_filelen(struct zsync_state *zs) {
@@ -141,7 +144,7 @@ static char **append_ptrlist(int *n, char **p, char *a) {
 }
 
 /* Constructor */
-struct zsync_state *zsync_begin(FILE * f, int headersOnly) {
+struct zsync_state* zsync_begin(FILE * f, int headersOnly, const char* target_dir) {
     /* Defaults for the checksum bytes and sequential matches properties of the
      * rcksum_state. These are the defaults from versions of zsync before these
      * were variable. */
@@ -311,12 +314,21 @@ struct zsync_state *zsync_begin(FILE * f, int headersOnly) {
         free(zs);
         return NULL;
     }
+
+    if (target_dir != NULL)
+        zs->target_dir = strdup(target_dir);
+    else
+        zs->target_dir = NULL;
+
     if (headersOnly == 0 && zsync_read_blocksums(zs, f, rsum_bytes, checksum_bytes, seq_matches) != 0) {
         free(zs);
         return NULL;
     }
     return zs;
 }
+
+// forward declare zsync_cur_filename
+static char *zsync_cur_filename(struct zsync_state *zs);
 
 /* zsync_read_blocksums(self, FILE*, rsum_bytes, checksum_bytes, seq_matches)
  * Called during construction only, this creates the rcksum_state that stores
@@ -331,7 +343,7 @@ static int zsync_read_blocksums(struct zsync_state *zs, FILE * f,
                                 int seq_matches) {
     /* Make the rcksum_state first */
     if (!(zs->rs = rcksum_init(zs->blocks, zs->blocksize, rsum_bytes,
-                               checksum_bytes, seq_matches))) {
+                               checksum_bytes, seq_matches, zs->target_dir))) {
         return -1;
     }
 
@@ -758,6 +770,8 @@ char *zsync_end(struct zsync_state *zs) {
     free(zs->checksum);
     free(zs->filename);
     free(zs->zfilename);
+    if (zs->target_dir != NULL)
+        free(zs->target_dir);
     free(zs);
     zs = NULL;
     return f;
