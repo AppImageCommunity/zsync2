@@ -1,5 +1,6 @@
 // system headers
 #include <arpa/inet.h>
+#include <cmath>
 #include <iomanip>
 #include <iostream>
 #include <iterator>
@@ -174,7 +175,7 @@ namespace zsync2 {
 
             // decide how long a rsum hash and checksum hash per block we need for this file
             seqMatches = (length > blockSize) ? 2 : 1;
-            rSumLength = static_cast<int>(ceil(((log(length) + log(blockSize)) / log(2) - 8.6) / seqMatches / 8));
+            rSumLength = static_cast<int>(std::ceil(((log(length) + log(blockSize)) / log(2) - 8.6) / seqMatches / 8));
 
             // apply limits
             if (rSumLength > 4)
@@ -183,7 +184,7 @@ namespace zsync2 {
                 rSumLength = 2;
 
             // calculate two different checksum lengths and pick the maximum
-            checksumLength = static_cast<int>(ceil((20 + (log(length) + log(1 + length / blockSize)) / log(2)) / seqMatches / 8));
+            checksumLength = static_cast<int>(std::ceil((20 + (log(length) + log(1 + length / blockSize)) / log(2)) / seqMatches / 8));
             {
                 auto checksumLength2 = static_cast<int>((7.9 + (20 + log(1 + length / blockSize) / log(2))) / 8);
                 if (checksumLength < checksumLength2)
