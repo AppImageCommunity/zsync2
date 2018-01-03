@@ -64,7 +64,7 @@ namespace zsync2 {
         Private(
             std::string pathOrUrlToZSyncFile,
             const std::string& pathToLocalFile,
-            bool overwrite
+            const bool overwrite
         ) : pathOrUrlToZSyncFile(std::move(pathOrUrlToZSyncFile)), zsHandle(nullptr), state(INITIALIZED),
                                  localUsed(0), httpDown(0), remoteFileSizeCache(-1) {
             // if the local file should be overwritten, we'll instruct
