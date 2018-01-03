@@ -781,9 +781,11 @@ namespace zsync2 {
 
                     if (fh < 0) {
                         issueStatusMessage("Error opening file " + pathToLocalFile);
+                        return false;
                     }
 
                     auto rv = zsync_sha1(zs, fh);
+
                     switch(rv) {
                         case -1:
                             updateAvailable = true;
@@ -796,6 +798,7 @@ namespace zsync2 {
                             close(fh);
                             return false;
                     }
+
                     close(fh);
                     break;
                 }
@@ -874,8 +877,9 @@ namespace zsync2 {
     bool ZSyncClient::run() {
         auto result = d->run();
 
-        // make sure to change state to DONE, regardless of whatever happens in d->run()
-        d->state = d->DONE;
+        // make sure to change state to DONE unless result shows an error
+        if (result)
+            d->state = d->DONE;
 
         return result;
     }
