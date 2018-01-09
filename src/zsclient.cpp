@@ -4,6 +4,7 @@
 // system includes
 #include <iostream>
 #include <deque>
+#include <fcntl.h>
 #include <set>
 #include <sys/stat.h>
 #include <utility>
@@ -11,11 +12,11 @@
 
 // library includes
 #include <cpr/cpr.h>
-#include <fcntl.h>
-#include <libgen.h>
 
 extern "C" {
-    // temporarily include curl as well until cpr can be used directly
+    #include <hashlib/md5.h>
+    #include <hashlib/sha1.h>
+    #include <hashlib/sha256.h>
     #include <zsync.h>
     #include <zlib.h>
 }
@@ -156,23 +157,136 @@ namespace zsync2 {
                     return true;
                 };
 
+                // implements RFC 3230 (extended by RFC 5843)
+                auto verifyInstanceDigest = [this](const cpr::Response verificationResponse, const cpr::Response response, bool& digestFound) {
+                    digestFound = false;
+
+                    if (response.status_code != 200) {
+                        if (verificationResponse.status_code == 206) {
+                            issueStatusMessage("Skipping instance digest verification of partial response");
+                            return true;
+                        }
+
+                        return false;
+                    }
+
+                    for (const auto& header : verificationResponse.header) {
+                        if (toLower(header.first) == "digest") {
+
+
+                            // split by comma to support multiple digests as per RFC 3230
+                            for (auto part : split(header.second, ',')) {
+                                trim(part);
+
+                                // now split key and value
+                                const auto keyval = split(header.second, '=');
+
+                                if (keyval.size() != 2) {
+                                    issueStatusMessage("Failed to parse key/value pair: " + part);
+                                    return false;
+                                }
+
+                                const auto& algorithm = keyval[0];
+                                const auto& value = keyval[1];
+
+                                auto rawDigest = base64Decode(value);
+                                auto digest = bytesToHex((unsigned char*) rawDigest.data(), (int) rawDigest.size());
+
+                                if (toLower(algorithm) == "md5") {
+                                    digestFound = true;
+
+                                    MD5 md5;
+                                    md5.add(response.text.data(), response.text.size());
+                                    auto calculatedDigest = md5.getHash();
+
+                                    issueStatusMessage("Found MD5 digest: " + digest);
+
+                                    if (digest == calculatedDigest) {
+                                        issueStatusMessage("Verified instance digest of redirected .zsync response");
+                                    } else {
+                                        issueStatusMessage("Failed to verify digest of redirected .zsync response, aborting update");
+                                        return false;
+                                    }
+
+                                } else if (toLower(algorithm) == "sha") {
+                                    digestFound = true;
+
+                                    SHA1 sha1;
+                                    sha1.add(response.text.data(), response.text.size());
+                                    auto calculatedDigest = sha1.getHash();
+
+                                    issueStatusMessage("Found SHA1 digest: " + digest);
+
+                                    if (digest == calculatedDigest) {
+                                        issueStatusMessage("Verified instance digest of redirected .zsync response");
+                                    } else {
+                                        issueStatusMessage("Failed to verify digest of redirected .zsync response, aborting update");
+                                        return false;
+                                    }
+                                } else if (toLower(algorithm) == "sha-256") {
+                                    digestFound = true;
+
+                                    SHA256 sha256;
+                                    sha256.add(response.text.data(), response.text.size());
+                                    auto calculatedDigest = sha256.getHash();
+
+                                    issueStatusMessage("Found SHA256 digest: " + digest);
+
+                                    if (digest == calculatedDigest) {
+                                        issueStatusMessage("Verified instance digest of redirected .zsync response");
+                                    } else {
+                                        issueStatusMessage("Failed to verify digest of redirected .zsync response, aborting update");
+                                        return false;
+                                    }
+                                } else if (toLower(algorithm) == "sha-512") {
+                                    digestFound = false;
+
+                                    issueStatusMessage("Found SHA512 digest: " + digest);
+                                    issueStatusMessage("SHA512 instance digests are not supported at the moment");
+                                } else {
+                                    digestFound = false;
+                                    issueStatusMessage("Invalid instance digest type: " + algorithm);
+                                    return false;
+                                }
+                            }
+
+                            // accept only one Digest header
+                            break;
+                        }
+                    }
+
+                    response.header;
+
+                    return true;
+                };
+
+                // keep a session to make use of cURL's persistent connections feature
+                cpr::Session session;
+
+                session.SetUrl(pathOrUrlToZSyncFile);
+                // request so-called Instance Digest (RFC 3230, RFC 5843)
+                session.SetHeader(cpr::Header{{"want-digest", "sha-512;q=1, sha-256;q=0.9, sha;q=0.2, md5;q=0.1"}});
+
                 // if interested in headers only, the first 1kB should contain the interesting data, the rest will be
                 // skipped
                 if (headersOnly) {
                     static const auto chunkSize = 1024;
                     unsigned long currentChunk = 0;
 
-                    // keep a session to make use of cURL's persistent connections feature
-                    cpr::Session session;
-
                     // download a chunk at a time
                     while (true) {
-                        session.SetUrl(pathOrUrlToZSyncFile);
-
                         std::ostringstream bytes;
                         bytes << "bytes=" << currentChunk << "-" << currentChunk + chunkSize - 1;
                         session.SetHeader(cpr::Header{{"range", bytes.str()}});
 
+                        session.SetRedirect(false);
+                        auto verificationResponse = session.Get();
+
+//                        bool digestVerified;
+//                        if (!verifyInstanceDigest(verificationResponse, digestVerified))
+//                            return nullptr;
+
+                        session.SetRedirect(true);
                         auto response = session.Get();
 
                         // expect a range response
@@ -188,7 +302,15 @@ namespace zsync2 {
                         currentChunk += chunkSize;
                     }
                 } else {
-                    auto response = cpr::Get(pathOrUrlToZSyncFile);
+                    session.SetRedirect(false);
+                    auto verificationResponse = session.Get();
+
+                    session.SetRedirect(true);
+                    auto response = session.Get();
+
+                    bool digestVerified;
+                    if (!verifyInstanceDigest(verificationResponse, response, digestVerified))
+                        return nullptr;
 
                     // expecting a 200 response
                     if (!checkResponseForError(response, 200))
