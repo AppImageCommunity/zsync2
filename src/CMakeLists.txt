@@ -18,8 +18,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_BINARY_DI
 # since there's headers in the build directory now, include that as well
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
-set(ZSYNC2_DEPS ${CPR_LIBRARIES} libzsync)
-set(LIBZSYNC2_DEPS hashlib ${ZSYNC2_DEPS})
+set(ZSYNC2_DEPS ${CPR_LIBRARIES} libzsync hashlib)
+set(LIBZSYNC2_DEPS ${ZSYNC2_DEPS})
 set(ZSYNC2_HDRS
     format_string.h
     ${CMAKE_CURRENT_BINARY_DIR}/config.h
