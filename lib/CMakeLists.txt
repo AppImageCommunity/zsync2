@@ -22,3 +22,6 @@ target_include_directories(args INTERFACE args)
 
 # Google Test framework
 add_subdirectory(gtest)
+
+# minimal zlib-licensed hash library
+add_subdirectory(hashlib)

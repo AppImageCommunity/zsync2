@@ -4,6 +4,7 @@
 // system includes
 #include <iostream>
 #include <deque>
+#include <fcntl.h>
 #include <set>
 #include <sys/stat.h>
 #include <utility>
@@ -11,10 +12,11 @@
 
 // library includes
 #include <cpr/cpr.h>
-#include <fcntl.h>
 
 extern "C" {
-    // temporarily include curl as well until cpr can be used directly
+    #include <hashlib/md5.h>
+    #include <hashlib/sha1.h>
+    #include <hashlib/sha256.h>
     #include <zsync.h>
     #include <zlib.h>
 }
@@ -63,7 +65,7 @@ namespace zsync2 {
         Private(
             std::string pathOrUrlToZSyncFile,
             const std::string& pathToLocalFile,
-            bool overwrite
+            const bool overwrite
         ) : pathOrUrlToZSyncFile(std::move(pathOrUrlToZSyncFile)), zsHandle(nullptr), state(INITIALIZED),
                                  localUsed(0), httpDown(0), remoteFileSizeCache(-1) {
             // if the local file should be overwritten, we'll instruct
@@ -155,23 +157,136 @@ namespace zsync2 {
                     return true;
                 };
 
+                // implements RFC 3230 (extended by RFC 5843)
+                auto verifyInstanceDigest = [this](const cpr::Response verificationResponse, const cpr::Response response, bool& digestFound) {
+                    digestFound = false;
+
+                    if (response.status_code != 200) {
+                        if (verificationResponse.status_code == 206) {
+                            issueStatusMessage("Skipping instance digest verification of partial response");
+                            return true;
+                        }
+
+                        return false;
+                    }
+
+                    for (const auto& header : verificationResponse.header) {
+                        if (toLower(header.first) == "digest") {
+
+
+                            // split by comma to support multiple digests as per RFC 3230
+                            for (auto part : split(header.second, ',')) {
+                                trim(part);
+
+                                // now split key and value
+                                const auto keyval = split(header.second, '=');
+
+                                if (keyval.size() != 2) {
+                                    issueStatusMessage("Failed to parse key/value pair: " + part);
+                                    return false;
+                                }
+
+                                const auto& algorithm = keyval[0];
+                                const auto& value = keyval[1];
+
+                                auto rawDigest = base64Decode(value);
+                                auto digest = bytesToHex((unsigned char*) rawDigest.data(), (int) rawDigest.size());
+
+                                if (toLower(algorithm) == "md5") {
+                                    digestFound = true;
+
+                                    MD5 md5;
+                                    md5.add(response.text.data(), response.text.size());
+                                    auto calculatedDigest = md5.getHash();
+
+                                    issueStatusMessage("Found MD5 digest: " + digest);
+
+                                    if (digest == calculatedDigest) {
+                                        issueStatusMessage("Verified instance digest of redirected .zsync response");
+                                    } else {
+                                        issueStatusMessage("Failed to verify digest of redirected .zsync response, aborting update");
+                                        return false;
+                                    }
+
+                                } else if (toLower(algorithm) == "sha") {
+                                    digestFound = true;
+
+                                    SHA1 sha1;
+                                    sha1.add(response.text.data(), response.text.size());
+                                    auto calculatedDigest = sha1.getHash();
+
+                                    issueStatusMessage("Found SHA1 digest: " + digest);
+
+                                    if (digest == calculatedDigest) {
+                                        issueStatusMessage("Verified instance digest of redirected .zsync response");
+                                    } else {
+                                        issueStatusMessage("Failed to verify digest of redirected .zsync response, aborting update");
+                                        return false;
+                                    }
+                                } else if (toLower(algorithm) == "sha-256") {
+                                    digestFound = true;
+
+                                    SHA256 sha256;
+                                    sha256.add(response.text.data(), response.text.size());
+                                    auto calculatedDigest = sha256.getHash();
+
+                                    issueStatusMessage("Found SHA256 digest: " + digest);
+
+                                    if (digest == calculatedDigest) {
+                                        issueStatusMessage("Verified instance digest of redirected .zsync response");
+                                    } else {
+                                        issueStatusMessage("Failed to verify digest of redirected .zsync response, aborting update");
+                                        return false;
+                                    }
+                                } else if (toLower(algorithm) == "sha-512") {
+                                    digestFound = false;
+
+                                    issueStatusMessage("Found SHA512 digest: " + digest);
+                                    issueStatusMessage("SHA512 instance digests are not supported at the moment");
+                                } else {
+                                    digestFound = false;
+                                    issueStatusMessage("Invalid instance digest type: " + algorithm);
+                                    return false;
+                                }
+                            }
+
+                            // accept only one Digest header
+                            break;
+                        }
+                    }
+
+                    response.header;
+
+                    return true;
+                };
+
+                // keep a session to make use of cURL's persistent connections feature
+                cpr::Session session;
+
+                session.SetUrl(pathOrUrlToZSyncFile);
+                // request so-called Instance Digest (RFC 3230, RFC 5843)
+                session.SetHeader(cpr::Header{{"want-digest", "sha-512;q=1, sha-256;q=0.9, sha;q=0.2, md5;q=0.1"}});
+
                 // if interested in headers only, the first 1kB should contain the interesting data, the rest will be
                 // skipped
                 if (headersOnly) {
                     static const auto chunkSize = 1024;
                     unsigned long currentChunk = 0;
 
-                    // keep a session to make use of cURL's persistent connections feature
-                    cpr::Session session;
-
                     // download a chunk at a time
                     while (true) {
-                        session.SetUrl(pathOrUrlToZSyncFile);
-
                         std::ostringstream bytes;
                         bytes << "bytes=" << currentChunk << "-" << currentChunk + chunkSize - 1;
                         session.SetHeader(cpr::Header{{"range", bytes.str()}});
 
+                        session.SetRedirect(false);
+                        auto verificationResponse = session.Get();
+
+//                        bool digestVerified;
+//                        if (!verifyInstanceDigest(verificationResponse, digestVerified))
+//                            return nullptr;
+
+                        session.SetRedirect(true);
                         auto response = session.Get();
 
                         // expect a range response
@@ -187,7 +302,15 @@ namespace zsync2 {
                         currentChunk += chunkSize;
                     }
                 } else {
-                    auto response = cpr::Get(pathOrUrlToZSyncFile);
+                    session.SetRedirect(false);
+                    auto verificationResponse = session.Get();
+
+                    session.SetRedirect(true);
+                    auto response = session.Get();
+
+                    bool digestVerified;
+                    if (!verifyInstanceDigest(verificationResponse, response, digestVerified))
+                        return nullptr;
 
                     // expecting a 200 response
                     if (!checkResponseForError(response, 200))
@@ -204,7 +327,7 @@ namespace zsync2 {
                 f = fmemopen(buffer.data(), buffer.size(), "r");
             }
 
-            if ((zs = zsync_begin(f, headersOnly ? 1 : 0)) == nullptr) {
+            if ((zs = zsync_begin(f, (headersOnly ? 1 : 0), (cwd.empty() ? nullptr : cwd.c_str()))) == nullptr) {
                 issueStatusMessage("Failed to parse .zsync file!");
                 return nullptr;
             }
@@ -613,6 +736,7 @@ namespace zsync2 {
                 return false;
             }
 
+            // make sure new file will be created in the same directory as the original file
             applyCwdToPathToLocalFile();
 
             // calculate path to temporary file
@@ -663,10 +787,10 @@ namespace zsync2 {
             // the content changed, in which case it still contains anything relevant
             // from the old .part).
             issueStatusMessage("Renaming temp file");
-             if (zsync_rename_file(zsHandle, tempFilePath.c_str()) != 0) {
-                 state = DONE;
-                 return false;
-             }
+            if (zsync_rename_file(zsHandle, tempFilePath.c_str()) != 0) {
+                state = DONE;
+                return false;
+            }
 
             // step 3: fetch remaining blocks via the URLs from the .zsync
             issueStatusMessage("Fetching remaining blocks");
@@ -779,9 +903,11 @@ namespace zsync2 {
 
                     if (fh < 0) {
                         issueStatusMessage("Error opening file " + pathToLocalFile);
+                        return false;
                     }
 
                     auto rv = zsync_sha1(zs, fh);
+
                     switch(rv) {
                         case -1:
                             updateAvailable = true;
@@ -794,6 +920,7 @@ namespace zsync2 {
                             close(fh);
                             return false;
                     }
+
                     close(fh);
                     break;
                 }
@@ -872,8 +999,9 @@ namespace zsync2 {
     bool ZSyncClient::run() {
         auto result = d->run();
 
-        // make sure to change state to DONE, regardless of whatever happens in d->run()
-        d->state = d->DONE;
+        // make sure to change state to DONE unless result shows an error
+        if (result)
+            d->state = d->DONE;
 
         return result;
     }
