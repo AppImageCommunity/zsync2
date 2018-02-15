@@ -3,6 +3,8 @@
 
 cmake_minimum_required(VERSION 3.2)
 
+set(CMAKE_POSITION_INDEPENDENT_CODE true)
+
 set(HASHLIB_SRCS
     src/crc32.cpp
     src/digest.cpp

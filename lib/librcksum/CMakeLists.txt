@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.2)
 
 project(librcksum)
 
+set(CMAKE_POSITION_INDEPENDENT_CODE true)
+
 # there are tests, so enable testing
 enable_testing()
 

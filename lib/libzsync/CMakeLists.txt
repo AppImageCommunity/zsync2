@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.2)
 
 project(libzsync)
 
+set(CMAKE_POSITION_INDEPENDENT_CODE true)
+
 # there are tests, so enable testing
 enable_testing()
 
