@@ -67,7 +67,7 @@ chmod +x appimagetool-x86_64.AppImage
 
 # create zsync2 AppImage
 ./appimagetool-x86_64.AppImage -v --exclude-file "$REPO_ROOT"/resources/zsync2.ignore AppDir \
-    -u 'gh-releases-zsync|TheAssassin|zsync2|continuous|zsync2-*x86_64.AppImage.zsync'
+    -u 'gh-releases-zsync|AppImage|zsync2|continuous|zsync2-*x86_64.AppImage.zsync'
 
 # change AppDir root to fit the GUI
 pushd AppDir
@@ -77,7 +77,7 @@ popd
 
 # create zsyncmake2 AppImage
 ./appimagetool-x86_64.AppImage -v --exclude-file "$REPO_ROOT"/resources/zsyncmake2.ignore AppDir \
-    -u 'gh-releases-zsync|TheAssassin|zsync2|continuous|zsyncmake2-*x86_64.AppImage.zsync'
+    -u 'gh-releases-zsync|AppImage|zsync2|continuous|zsyncmake2-*x86_64.AppImage.zsync'
 
 # move AppImages to old cwd
 mv zsync*2*.AppImage* "$OLD_CWD"/
