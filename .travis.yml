@@ -13,6 +13,8 @@ script:
 after_success:
   - ls -lh
   - wget -c https://github.com/probonopd/uploadtool/raw/master/upload.sh
+  # make sure only pushes to master create a new release, otherwise pretend PR and upload to transfer.sh
+  - if [ "$TRAVIS_BRANCH" != "master" ]; then export TRAVIS_EVENT_TYPE=pull_request; fi
   - bash ./upload.sh zsync*2*.AppImage*
 
 branches:
