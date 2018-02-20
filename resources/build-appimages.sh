@@ -26,8 +26,7 @@ OLD_CWD=$(readlink -f .)
 
 pushd "$BUILD_DIR"
 
-# TODO: fix setting those variables in the CMake configurations
-cmake "$REPO_ROOT" -DBUILD_CPR_TESTS=OFF -DUSE_SYSTEM_CURL=ON -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=RelWithDebInfo
+cmake "$REPO_ROOT" -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=RelWithDebInfo
 
 # create AppDir
 mkdir -p AppDir

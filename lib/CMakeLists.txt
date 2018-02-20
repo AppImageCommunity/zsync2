@@ -10,9 +10,9 @@ add_subdirectory(libzsync)
 # external dependencies used as submodules
 
 # using system cURL as it has proper SSL support etc., and reduces the build time
-set(USE_SYSTEM_CURL ON)
+set(USE_SYSTEM_CURL ON CACHE BOOL "" FORCE)
 # disable CPR tests to save compile time and avoid clashes with own tests
-set(BUILD_CPR_TESTS OFF)
+set(BUILD_CPR_TESTS OFF CACHE BOOL "" FORCE)
 add_subdirectory(cpr)
 
 # it's quite simple dealing with the args library directly from CMake
