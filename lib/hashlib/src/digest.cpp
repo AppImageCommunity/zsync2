@@ -6,12 +6,12 @@
 
 // g++ -O3 digest.cpp crc32.cpp md5.cpp sha1.cpp sha256.cpp keccak.cpp sha3.cpp -o digest
 
-#include "../include/hashlib/crc32.h"
-#include "../include/hashlib/md5.h"
-#include "../include/hashlib/sha1.h"
-#include "../include/hashlib/sha256.h"
-#include "../include/hashlib/keccak.h"
-#include "../include/hashlib/sha3.h"
+#include "hashlib/crc32.h"
+#include "hashlib/md5.h"
+#include "hashlib/sha1.h"
+#include "hashlib/sha256.h"
+#include "hashlib/keccak.h"
+#include "hashlib/sha3.h"
 
 #include <iostream>
 #include <fstream>

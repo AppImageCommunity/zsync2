@@ -4,7 +4,7 @@
 // see http://create.stephan-brumme.com/disclaimer.html
 //
 
-#include "../include/hashlib/md5.h"
+#include "hashlib/md5.h"
 
 #ifndef _MSC_VER
 #include <endian.h>

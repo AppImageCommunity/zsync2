@@ -4,7 +4,7 @@
 // see http://create.stephan-brumme.com/disclaimer.html
 //
 
-#include "../include/hashlib/sha256.h"
+#include "hashlib/sha256.h"
 
 // big endian architectures need #define __BYTE_ORDER __BIG_ENDIAN
 #ifndef _MSC_VER

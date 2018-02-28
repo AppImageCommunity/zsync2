@@ -4,7 +4,7 @@
 // see http://create.stephan-brumme.com/disclaimer.html
 //
 
-#include "../include/hashlib/crc32.h"
+#include "hashlib/crc32.h"
 
 // big endian architectures need #define __BYTE_ORDER __BIG_ENDIAN
 #ifndef _MSC_VER
