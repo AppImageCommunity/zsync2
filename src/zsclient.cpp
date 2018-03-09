@@ -267,8 +267,7 @@ namespace zsync2 {
                 // request so-called Instance Digest (RFC 3230, RFC 5843)
                 session.SetHeader(cpr::Header{{"want-digest", "sha-512;q=1, sha-256;q=0.9, sha;q=0.2, md5;q=0.1"}});
 
-                // if interested in headers only, the first 1kB should contain the interesting data, the rest will be
-                // skipped
+                // if interested in headers only, download 1 kiB chunks until end of zsync header is found
                 if (headersOnly) {
                     static const auto chunkSize = 1024;
                     unsigned long currentChunk = 0;
