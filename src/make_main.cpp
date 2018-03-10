@@ -5,6 +5,7 @@
 #include <args.hxx>
 
 // local headers
+#include "config.h"
 #include "zsmake.h"
 #include "zsutil.h"
 
@@ -36,6 +37,7 @@ int main(int argc, char** argv) {
         "",
         {'c', "custom-header"}
     );
+    args::Flag showVersion(parser, "", "Print version and exit", {'V', "version"});
 
     args::Positional<string> fileName(parser, "filename",
         "Name of the file which a .zsync file should be generated for."
@@ -50,6 +52,16 @@ int main(int argc, char** argv) {
         cerr << e.what() << endl << endl;
         cerr << parser;
         return 1;
+    }
+
+    // always show version statement
+    cerr << "zsync2 version " << VERSION
+         << " (commit " << GIT_COMMIT << "), "
+         << "build " << BUILD_NUMBER << " built on " << BUILD_DATE << endl;
+
+    // check whether any flag has been specified which wants the application to exit immediately
+    if (showVersion) {
+        return 0;
     }
 
     if (!fileName) {

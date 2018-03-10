@@ -66,11 +66,13 @@ int main(const int argc, const char** argv) {
         return 1;
     }
 
+    // always show version statement
+    cerr << "zsync2 version " << VERSION
+         << " (commit " << GIT_COMMIT << "), "
+         << "build " << BUILD_NUMBER << " built on " << BUILD_DATE << endl;
+
     // check whether any flag has been specified which wants the application to exit immediately
     if (showVersion) {
-        cerr << "zsync2 version " << VERSION
-             << " (commit " << GIT_COMMIT << "), "
-             << "build " << BUILD_NUMBER << " built on " << BUILD_DATE << endl;
         return 0;
     }
 
