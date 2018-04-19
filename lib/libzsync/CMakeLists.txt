@@ -14,7 +14,7 @@ add_library(libzsync zsync.c zmap.c sha1.c)
 set_target_properties(libzsync PROPERTIES PREFIX "")
 
 # link relevant libraries
-target_link_libraries(libzsync zsync2_zlib librcksum)
+target_link_libraries(libzsync zsync2_libz librcksum)
 
 # declare includes
 target_include_directories(libzsync PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
