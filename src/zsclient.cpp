@@ -433,9 +433,9 @@ namespace zsync2 {
             // NOTE: fopencookie is a Linux-only solution
             // for other platforms, this will have to be adapted (e.g., using funopen() on BSD)
             cookie_io_functions_t iofuncs = {
-                [](void* gzf, char* buf, size_t count) { return (long) gzread((gzFile) gzf, buf, (unsigned) count); },
-                [](void* gzf, const char* buf, size_t count) { return (long) gzwrite((gzFile) gzf, buf, (unsigned) count); },
-                [](void* gzf, long* offset, int whence) { return (int) gzseek((gzFile) gzf, (unsigned) *offset, whence); },
+                [](void* gzf, char* buf, size_t count) { return (ssize_t) gzread((gzFile) gzf, buf, (unsigned) count); },
+                [](void* gzf, const char* buf, size_t count) { return (ssize_t) gzwrite((gzFile) gzf, buf, (unsigned) count); },
+                [](void* gzf, off64_t* offset, int whence) { return (int) gzseek((gzFile) gzf, (unsigned) *offset, whence); },
                 [](void* gzf) { return gzclose((gzFile) gzf); },
             };
             return fopencookie(f, "r", iofuncs);
