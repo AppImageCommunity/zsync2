@@ -705,6 +705,9 @@ namespace zsync2 {
         }
 
         void applyCwdToPathToLocalFile() {
+            if (strncmp(pathToLocalFile.c_str(), "/", 1) == 0)
+                return;
+
             auto oldPath = pathToLocalFile;
             pathToLocalFile = cwd;
             if (!endsWith(pathToLocalFile, "/"))

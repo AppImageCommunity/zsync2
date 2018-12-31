@@ -28,7 +28,7 @@ this library.
 To build on Debian or Ubuntu style systems:
 
 ```
-sudo apt-get -y install git cmake g++ libssl-dev libssh2-1-dev libcurl4-gnutls-dev
+sudo apt-get -y install git cmake g++ libssl-dev libssh2-1-dev libcurl4-gnutls-dev zlib1g-dev
    
 git submodule update --init
 mkdir build
