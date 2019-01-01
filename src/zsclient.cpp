@@ -332,7 +332,7 @@ namespace zsync2 {
             }
 
             // store copy of .zsync file locally, if specified
-            if (!headersOnly && !pathToStoreZSyncFileInLocally.empty()) {
+            if (!pathToStoreZSyncFileInLocally.empty()) {
                 std::ofstream ofs(pathToStoreZSyncFileInLocally);
                 auto error = errno;
 
