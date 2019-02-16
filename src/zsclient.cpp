@@ -646,6 +646,7 @@ namespace zsync2 {
                         /* If error, we need to flag that to our caller */
                         if (len < 0) {
                             ret = -1;
+                            break;
                         }
                         else{    /* Else, let the zsync receiver know that we're at EOF; there
                          *could be data in its buffer that it can use or needs to process */
