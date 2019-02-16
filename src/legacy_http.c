@@ -20,6 +20,7 @@
 
 #include "zsglobal.h"
 
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -44,6 +45,26 @@
  * Buffered struct to read from a HTTP connection, managed by curl.
  * Uses the http_* functions to manage it like a file.
  */
+
+/**
+ * Prints a log message with a newline character.
+ */
+void log_message(const char* msgfmt, ...) {
+    va_list args;
+    va_start(args, msgfmt);
+
+    // print prefix
+    char prefix[] = "zsync_legacy: ";
+    fprintf(stderr, prefix, sizeof(prefix));
+
+    // print formatted message
+    vfprintf(stderr, msgfmt, args);
+
+    // print newline
+    fprintf(stderr, "\n");
+
+    va_end(args);
+}
 
 struct http_file
 {
@@ -115,78 +136,6 @@ void setup_curl_handle(CURL *handle)
     }
 }
 
-/****************************************************************************
- *
- * Get a file from a url, put the contents into a temporary file.
- * Keeps track of the actual url used after redirects, etc.
- */
-
-FILE *http_get(const char *orig_url, char **track_referer, const char *tfname) {
-    FILE *f;
-    CURL *curl;
-    CURLcode res;
-    long response_code;
-    char *effective_url;
-
-    f = tfname ? fopen(tfname, "w+") : tmpfile();
-    if (!f) {
-        perror(tfname);
-        return NULL;
-    }
-
-    /* this isn't anything to do with the main transfer, so has it's own easy
-       curl handle. */
-    curl = curl_easy_init();
-    if (!curl) {
-        fclose(f);
-        return NULL;
-    }
-
-    /* TODO: set up the SSL options in common code. */
-    curl_easy_setopt( curl, CURLOPT_URL, orig_url );
-    curl_easy_setopt( curl, CURLOPT_WRITEDATA, f );
-    setup_curl_handle(curl);
-
-    res = curl_easy_perform( curl );
-    if (res) {
-        fprintf(stderr, "libcurl: %s\n", curl_easy_strerror(res));
-        fclose(f);
-        curl_easy_cleanup(curl);
-        return NULL;
-    }
-
-    res = curl_easy_getinfo( curl, CURLINFO_RESPONSE_CODE, &response_code );
-    if (res != CURLE_OK) {
-        fprintf(stderr, "Could not get HTTP response code!\n");
-        fclose(f);
-        curl_easy_cleanup(curl);
-        return NULL;
-    }
-
-    if (response_code != 200) {
-        fprintf(stderr, "Got HTTP %ld (expected 200)\n", response_code);
-        fclose(f);
-        curl_easy_cleanup(curl);
-        return NULL;
-    }
-
-    if (track_referer) {
-        res = curl_easy_getinfo( curl, CURLINFO_EFFECTIVE_URL, &effective_url );
-        if(res != CURLE_OK) {
-            fprintf(stderr, "Could not get last effective URL: %s\n", curl_easy_strerror(res));
-            fclose(f);
-            curl_easy_cleanup(curl);
-            return NULL;
-        }
-
-        *track_referer = strdup(effective_url);
-    }
-
-    curl_easy_cleanup( curl );
-    rewind(f);
-    return f;
-}
-
 
 /****************************************************************************
  *
@@ -205,7 +154,7 @@ static size_t write_callback(char *buffer, size_t size, size_t nitems, void *use
         /* not enough space in buffer, alloc more */
         newbuff = realloc(url->buffer, url->buffer_len + (size - rembuff));
         if(newbuff == NULL){
-            fprintf(stderr,"callback buffer grow failed\n");
+            log_message("callback buffer grow failed");
             size = rembuff;
         }else{
             /* buffer got more memory, record the new length and keep the new buffer */
@@ -567,30 +516,30 @@ int range_fetch_read_http_headers(struct range_fetch *rf) {
 
         if (rfgets(buf, sizeof(buf), rf) == NULL){
             /* most likely unexpected EOF from server */
-            fprintf(stderr, "EOF from server");
+            log_message("EOF from server\n");
             return -1;
         }
         if (buf[0] == 0)
             return 0;           /* EOF, caller decides if that's an error */
         if (memcmp(buf, "HTTP/1", 6) != 0 || (p = strchr(buf, ' ')) == NULL) {
-            fprintf(stderr, "got non-HTTP response '%s'\n", buf);
+            log_message("got non-HTTP response '%s'\n", buf);
             return -1;
         }
         status = atoi(p + 1);
         if (status != 206 && status != 301 && status != 302) {
             if (status >= 300 && status < 400) {
-                fprintf(stderr,
-                        "\nzsync received a redirect/further action required status code: %d\nzsync specifically refuses to proceed when a server requests further action. This is because zsync makes a very large number of requests per file retrieved, and so if zsync has to perform additional actions per request, it further increases the load on the target server. The person/entity who created this zsync file should change it to point directly to a URL where the target file can be retrieved without additional actions/redirects needing to be followed.\nSee http://zsync.moria.orc.uk/server-issues\n",
+                log_message(
+                        "\nzsync received a redirect/further action required status code: %d\nzsync specifically refuses to proceed when a server requests further action. This is because zsync makes a very large number of requests per file retrieved, and so if zsync has to perform additional actions per request, it further increases the load on the target server. The person/entity who created this zsync file should change it to point directly to a URL where the target file can be retrieved without additional actions/redirects needing to be followed.\nSee http://zsync.moria.orc.uk/server-issues",
                         status);
             }
             else if (status == 200) {
-                fprintf(stderr,
-                        "\nzsync received a data response (code %d) but this is not a partial content response\nzsync can only work with servers that support returning partial content from files. The person/entity creating this .zsync has tried to use a server that is not returning partial content. zsync cannot be used with this server.\nSee http://zsync.moria.orc.uk/server-issues\n",
+                log_message(
+                        "\nzsync received a data response (code %d) but this is not a partial content response\nzsync can only work with servers that support returning partial content from files. The person/entity creating this .zsync has tried to use a server that is not returning partial content. zsync cannot be used with this server.\nSee http://zsync.moria.orc.uk/server-issues",
                         status);
             }
             else {
                 /* generic error message otherwise */
-                fprintf(stderr, "bad status code %d\n", status);
+                log_message("bad status code %d", status);
             }
             return -1;
         }
@@ -637,7 +586,7 @@ int range_fetch_read_http_headers(struct range_fetch *rf) {
                 rf->block_left = to + 1 - from;
                 rf->offset = from;
             } else {
-                fprintf(stderr, "failed to parse content-range header");
+                log_message("failed to parse content-range header");
             }
 
             /* Can only have got one range. */
@@ -678,7 +627,7 @@ int range_fetch_read_http_headers(struct range_fetch *rf) {
          */
     }
 
-    fprintf(stderr, "Error while parsing headers");
+    log_message("Error while parsing headers");
     return -1;
 }
 
@@ -725,13 +674,13 @@ int get_range_block(struct range_fetch *rf, off_t * offset, unsigned char *data,
 
             /* EOF on first connect is fatal */
             if (header_result == 0) {
-                fprintf(stderr, "EOF from %s\n", rf->url);
+                log_message("EOF from %s", rf->url);
                 return -1;
             }
 
             /* Return EOF or error to caller */
             if (header_result <= 0) {
-                fprintf(stderr, "Other error? %d\n", header_result);
+                log_message("Other error? %d", header_result);
                 return header_result ? -1 : 0;
             }
         }
@@ -751,7 +700,7 @@ int get_range_block(struct range_fetch *rf, off_t * offset, unsigned char *data,
                 return 0;
 
             if (memcmp(&buf[2], rf->boundary, strlen(rf->boundary))) {
-                fprintf(stderr, "got bad block boundary: %s != %s",
+                log_message("got bad block boundary: %s != %s",
                         rf->boundary, buf);
                 return -1;      /* This is an error now */
             }
@@ -787,8 +736,7 @@ int get_range_block(struct range_fetch *rf, off_t * offset, unsigned char *data,
 
             /* If we didn't get the byte range that this block represents, it's busted. */
             if (!gotr) {
-                fprintf(stderr,
-                        "got multipart/byteranges but no Content-Range?");
+                log_message("got multipart/byteranges but no Content-Range?");
                 return -1;
             }
 
