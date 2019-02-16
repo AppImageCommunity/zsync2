@@ -645,7 +645,6 @@ namespace zsync2 {
 
                         /* If error, we need to flag that to our caller */
                         if (len < 0) {
-                            fprintf(stdout, "%d returned\n", len);
                             ret = -1;
                         }
                         else{    /* Else, let the zsync receiver know that we're at EOF; there
