@@ -14,6 +14,7 @@ set(USE_SYSTEM_CURL ON CACHE BOOL "" FORCE)
 # disable CPR tests to save compile time and avoid clashes with own tests
 set(BUILD_CPR_TESTS OFF CACHE BOOL "" FORCE)
 add_subdirectory(cpr)
+set_property(TARGET cpr PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 # it's quite simple dealing with the args library directly from CMake
 add_library(args INTERFACE)

@@ -41,6 +41,7 @@ namespace zsync2 {
         const std::string pathOrUrlToZSyncFile;
         std::string pathToLocalFile;
         std::string pathToStoreZSyncFileInLocally;
+        bool zSyncFileStoredLocallyAlready;
 
         struct zsync_state* zsHandle;
 
@@ -67,7 +68,8 @@ namespace zsync2 {
             const std::string& pathToLocalFile,
             const bool overwrite
         ) : pathOrUrlToZSyncFile(std::move(pathOrUrlToZSyncFile)), zsHandle(nullptr), state(INITIALIZED),
-                                 localUsed(0), httpDown(0), remoteFileSizeCache(-1) {
+                                 localUsed(0), httpDown(0), remoteFileSizeCache(-1),
+                                 zSyncFileStoredLocallyAlready(false) {
             // if the local file should be overwritten, we'll instruct
             if (overwrite) {
                 this->pathToLocalFile = pathToLocalFile;
@@ -268,7 +270,7 @@ namespace zsync2 {
                 session.SetHeader(cpr::Header{{"want-digest", "sha-512;q=1, sha-256;q=0.9, sha;q=0.2, md5;q=0.1"}});
 
                 // if interested in headers only, download 1 kiB chunks until end of zsync header is found
-                if (headersOnly) {
+                if (headersOnly && zSyncFileStoredLocallyAlready) {
                     static const auto chunkSize = 1024;
                     unsigned long currentChunk = 0;
 
@@ -332,7 +334,7 @@ namespace zsync2 {
             }
 
             // store copy of .zsync file locally, if specified
-            if (!headersOnly && !pathToStoreZSyncFileInLocally.empty()) {
+            if (!pathToStoreZSyncFileInLocally.empty() && !zSyncFileStoredLocallyAlready) {
                 std::ofstream ofs(pathToStoreZSyncFileInLocally);
                 auto error = errno;
 
@@ -363,6 +365,8 @@ namespace zsync2 {
 
                 // reset file offset
                 rewind(f);
+
+                zSyncFileStoredLocallyAlready = true;
             }
 
             if (fclose(f) != 0) {
