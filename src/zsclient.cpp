@@ -619,6 +619,21 @@ namespace zsync2 {
                 }
             }
 
+            // if env var is set, write out ranges that would be downloaded to a file and exit
+            // this helps in debugging performance issues
+            // also note there's CURLOPT_VERBOSE which can be set to show all request and response headers
+            if (getenv("ZSYNC2_ANALYZE_BLOCKS")) {
+                std::ofstream ofs("zsync2_block_analysis.txt");
+
+                ofs << "new file size: " << zsync_filelen(zsHandle) << std::endl;
+
+                std::for_each(ranges.begin(), ranges.end(), [&ofs](const std::pair<int, int>& pair) {
+                    ofs << pair.first << " " << pair.second << std::endl;
+                });
+
+                exit(0);
+            }
+
             // begin downloading ranges, one by one
             {
                 for (const auto& pair : ranges) {
