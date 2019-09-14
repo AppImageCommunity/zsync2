@@ -115,8 +115,8 @@ namespace zsync2 {
         };
 
         bool setMtime(time_t mtime) {
-            struct stat s;
-            struct utimbuf u;
+            struct stat s{};
+            struct utimbuf u{};
 
             // get access time (shouldn't be modified)
             if (stat(pathToLocalFile.c_str(), &s) != 0) {
