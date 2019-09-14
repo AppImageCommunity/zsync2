@@ -448,6 +448,36 @@ namespace zsync2 {
 #endif
         }
 
+        static void optimizeRanges(std::vector<std::pair<off_t, off_t>>& ranges, const long threshold = 64 * 4096) {
+            // safety check
+            if (ranges.empty())
+                return;
+
+            std::vector<std::pair<off_t, off_t>> optimizedRanges;
+
+            // need to initialize with first range, will be skipped in loop
+            optimizedRanges.emplace_back(ranges.front());
+
+            for (auto it = (ranges.begin() + 1); it != ranges.end(); ++it) {
+                const auto& currentRange = *it;
+
+                // need to freshly fetch the last entry in the optimized ranges
+                auto& lastOptimizedRange = optimizedRanges.back();
+
+                // if the distance is small enough, we merge this range into the last one
+                if (currentRange.first - lastOptimizedRange.second <= threshold) {
+                    lastOptimizedRange.second = currentRange.second;
+                    continue;
+                }
+
+                // otherwise we just append it
+                optimizedRanges.emplace_back(currentRange);
+            }
+
+            // update caller's value
+            ranges = optimizedRanges;
+        }
+
         bool readSeedFile(const std::string &pathToSeedFile) {
             std::FILE* f;
 
@@ -617,6 +647,11 @@ namespace zsync2 {
                     ranges.emplace_back(std::make_pair(zbyterange.get()[i], zbyterange.get()[i + 1]));
                     ++i;
                 }
+            }
+
+            if (getenv("ZSYNC2_OPTIMIZE_RANGES")) {
+                // optimize ranges by combining ones with rather small distances
+                optimizeRanges(ranges);
             }
 
             // if env var is set, write out ranges that would be downloaded to a file and exit
