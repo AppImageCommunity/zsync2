@@ -57,6 +57,8 @@ namespace zsync2 {
 
         off_t remoteFileSizeCache;
 
+        unsigned long rangesOptimizationThreshold;
+
         // status message variables
 #ifndef ZSYNC_STANDALONE
         std::deque<std::string> statusMessages;
@@ -69,7 +71,7 @@ namespace zsync2 {
             const bool overwrite
         ) : pathOrUrlToZSyncFile(std::move(pathOrUrlToZSyncFile)), zsHandle(nullptr), state(INITIALIZED),
                                  localUsed(0), httpDown(0), remoteFileSizeCache(-1),
-                                 zSyncFileStoredLocallyAlready(false) {
+                                 zSyncFileStoredLocallyAlready(false), rangesOptimizationThreshold(0) {
             // if the local file should be overwritten, we'll instruct
             if (overwrite) {
                 this->pathToLocalFile = pathToLocalFile;
@@ -448,7 +450,7 @@ namespace zsync2 {
 #endif
         }
 
-        static void optimizeRanges(std::vector<std::pair<off_t, off_t>>& ranges, const long threshold = 64 * 4096) {
+        void optimizeRanges(std::vector<std::pair<off_t, off_t>>& ranges, const long threshold = 64 * 4096) {
             // safety check
             if (ranges.empty())
                 return;
@@ -473,6 +475,12 @@ namespace zsync2 {
                 // otherwise we just append it
                 optimizedRanges.emplace_back(currentRange);
             }
+
+            std::stringstream oss;
+            oss << "optimized ranges, old requests count " << ranges.size()
+                << ", new requests count " << optimizedRanges.size() << std::endl;
+
+            issueStatusMessage(oss.str());
 
             // update caller's value
             ranges = optimizedRanges;
@@ -649,9 +657,9 @@ namespace zsync2 {
                 }
             }
 
-            if (getenv("ZSYNC2_OPTIMIZE_RANGES")) {
+            if (rangesOptimizationThreshold > 0) {
                 // optimize ranges by combining ones with rather small distances
-                optimizeRanges(ranges);
+                optimizeRanges(ranges, rangesOptimizationThreshold);
             }
 
             // if env var is set, write out ranges that would be downloaded to a file and exit
@@ -1101,5 +1109,9 @@ namespace zsync2 {
 
     void ZSyncClient::storeZSyncFileInPath(const std::string& path) {
         d->pathToStoreZSyncFileInLocally = path;
+    }
+
+    void ZSyncClient::setRangesOptimizationThreshold(const unsigned long newRangesOptimizationThreshold) {
+        d->rangesOptimizationThreshold = newRangesOptimizationThreshold;
     }
 }

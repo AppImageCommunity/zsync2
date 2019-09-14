@@ -56,5 +56,12 @@ namespace zsync2 {
 
         // set path in which the .zsync file should be stored when downloaded first
         void storeZSyncFileInPath(const std::string& path);
+
+        // when set, reduces amount of range requests needed to make to a server by combining nearby ranges
+        // the value determines the distance between two ranges, defining what nearby means
+        // you should set this to multiples of 4 kiB (4096), which is the block size used internally by zsync2
+        // a good value might be 256 kiB (64 blocks, 4 kiB per block)
+        // set to 0 0 to disable any optimizations
+        void setRangesOptimizationThreshold(unsigned long newRangesOptimizationThreshold);
     };
 }
