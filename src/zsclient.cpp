@@ -600,18 +600,31 @@ namespace zsync2 {
                 throw;
             }
 
-            {   /* Get a set of byte ranges that we need to complete the target */
+            /* Get a set of byte ranges that we need to complete the target */
+            // we convert it to STL containers though to be able to work with them more easily
+            std::vector<std::pair<off_t, off_t>> ranges;
+
+            {
                 int nrange;
-                auto* zbyterange = zsync_needed_byte_ranges(zsHandle, &nrange, urlType);
+                std::shared_ptr<off_t> zbyterange(zsync_needed_byte_ranges(zsHandle, &nrange, urlType), free);
+
                 if (zbyterange == nullptr)
                     return 1;
                 if (nrange == 0)
                     return 0;
 
-                for(int i = 0; i < 2 * nrange; i++){
-                    auto beginbyte = zbyterange[i];
-                    i++;
-                    auto endbyte = zbyterange[i];
+                for (int i = 0; i < 2 * nrange; i++) {
+                    ranges.emplace_back(std::make_pair(zbyterange.get()[i], zbyterange.get()[i + 1]));
+                    ++i;
+                }
+            }
+
+            // begin downloading ranges, one by one
+            {
+                for (const auto& pair : ranges) {
+                    auto beginbyte = pair.first;
+                    auto endbyte = pair.second;
+
                     off_t single_range[2] = {beginbyte, endbyte};
                     /* And give that to the range fetcher */
                     /* Only one range at a time because Akamai can't handle more than one range per request */
@@ -663,9 +676,6 @@ namespace zsync2 {
                     }
 
                 }
-
-                free(zbyterange);
-
             }
 
             /* Clean up */
