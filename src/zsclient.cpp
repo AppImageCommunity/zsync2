@@ -57,6 +57,8 @@ namespace zsync2 {
 
         off_t remoteFileSizeCache;
 
+        unsigned long rangesOptimizationThreshold;
+
         // status message variables
 #ifndef ZSYNC_STANDALONE
         std::deque<std::string> statusMessages;
@@ -69,7 +71,7 @@ namespace zsync2 {
             const bool overwrite
         ) : pathOrUrlToZSyncFile(std::move(pathOrUrlToZSyncFile)), zsHandle(nullptr), state(INITIALIZED),
                                  localUsed(0), httpDown(0), remoteFileSizeCache(-1),
-                                 zSyncFileStoredLocallyAlready(false) {
+                                 zSyncFileStoredLocallyAlready(false), rangesOptimizationThreshold(0) {
             // if the local file should be overwritten, we'll instruct
             if (overwrite) {
                 this->pathToLocalFile = pathToLocalFile;
@@ -115,8 +117,8 @@ namespace zsync2 {
         };
 
         bool setMtime(time_t mtime) {
-            struct stat s;
-            struct utimbuf u;
+            struct stat s{};
+            struct utimbuf u{};
 
             // get access time (shouldn't be modified)
             if (stat(pathToLocalFile.c_str(), &s) != 0) {
@@ -448,6 +450,42 @@ namespace zsync2 {
 #endif
         }
 
+        void optimizeRanges(std::vector<std::pair<off_t, off_t>>& ranges, const long threshold = 64 * 4096) {
+            // safety check
+            if (ranges.empty())
+                return;
+
+            std::vector<std::pair<off_t, off_t>> optimizedRanges;
+
+            // need to initialize with first range, will be skipped in loop
+            optimizedRanges.emplace_back(ranges.front());
+
+            for (auto it = (ranges.begin() + 1); it != ranges.end(); ++it) {
+                const auto& currentRange = *it;
+
+                // need to freshly fetch the last entry in the optimized ranges
+                auto& lastOptimizedRange = optimizedRanges.back();
+
+                // if the distance is small enough, we merge this range into the last one
+                if (currentRange.first - lastOptimizedRange.second <= threshold) {
+                    lastOptimizedRange.second = currentRange.second;
+                    continue;
+                }
+
+                // otherwise we just append it
+                optimizedRanges.emplace_back(currentRange);
+            }
+
+            std::stringstream oss;
+            oss << "optimized ranges, old requests count " << ranges.size()
+                << ", new requests count " << optimizedRanges.size() << std::endl;
+
+            issueStatusMessage(oss.str());
+
+            // update caller's value
+            ranges = optimizedRanges;
+        }
+
         bool readSeedFile(const std::string &pathToSeedFile) {
             std::FILE* f;
 
@@ -600,18 +638,51 @@ namespace zsync2 {
                 throw;
             }
 
-            {   /* Get a set of byte ranges that we need to complete the target */
+            /* Get a set of byte ranges that we need to complete the target */
+            // we convert it to STL containers though to be able to work with them more easily
+            std::vector<std::pair<off_t, off_t>> ranges;
+
+            {
                 int nrange;
-                auto* zbyterange = zsync_needed_byte_ranges(zsHandle, &nrange, urlType);
+                std::shared_ptr<off_t> zbyterange(zsync_needed_byte_ranges(zsHandle, &nrange, urlType), free);
+
                 if (zbyterange == nullptr)
                     return 1;
                 if (nrange == 0)
                     return 0;
 
-                for(int i = 0; i < 2 * nrange; i++){
-                    auto beginbyte = zbyterange[i];
-                    i++;
-                    auto endbyte = zbyterange[i];
+                for (int i = 0; i < 2 * nrange; i++) {
+                    ranges.emplace_back(std::make_pair(zbyterange.get()[i], zbyterange.get()[i + 1]));
+                    ++i;
+                }
+            }
+
+            if (rangesOptimizationThreshold > 0) {
+                // optimize ranges by combining ones with rather small distances
+                optimizeRanges(ranges, rangesOptimizationThreshold);
+            }
+
+            // if env var is set, write out ranges that would be downloaded to a file and exit
+            // this helps in debugging performance issues
+            // also note there's CURLOPT_VERBOSE which can be set to show all request and response headers
+            if (getenv("ZSYNC2_ANALYZE_BLOCKS")) {
+                std::ofstream ofs("zsync2_block_analysis.txt");
+
+                ofs << "new file size: " << zsync_filelen(zsHandle) << std::endl;
+
+                std::for_each(ranges.begin(), ranges.end(), [&ofs](const std::pair<int, int>& pair) {
+                    ofs << pair.first << " " << pair.second << std::endl;
+                });
+
+                exit(0);
+            }
+
+            // begin downloading ranges, one by one
+            {
+                for (const auto& pair : ranges) {
+                    auto beginbyte = pair.first;
+                    auto endbyte = pair.second;
+
                     off_t single_range[2] = {beginbyte, endbyte};
                     /* And give that to the range fetcher */
                     /* Only one range at a time because Akamai can't handle more than one range per request */
@@ -649,8 +720,8 @@ namespace zsync2 {
 
                         /* If error, we need to flag that to our caller */
                         if (len < 0) {
-                            fprintf(stdout, "%d returned\n", len);
                             ret = -1;
+                            break;
                         }
                         else{    /* Else, let the zsync receiver know that we're at EOF; there
                          *could be data in its buffer that it can use or needs to process */
@@ -663,9 +734,6 @@ namespace zsync2 {
                     }
 
                 }
-
-                free(zbyterange);
-
             }
 
             /* Clean up */
@@ -1041,5 +1109,9 @@ namespace zsync2 {
 
     void ZSyncClient::storeZSyncFileInPath(const std::string& path) {
         d->pathToStoreZSyncFileInLocally = path;
+    }
+
+    void ZSyncClient::setRangesOptimizationThreshold(const unsigned long newRangesOptimizationThreshold) {
+        d->rangesOptimizationThreshold = newRangesOptimizationThreshold;
     }
 }

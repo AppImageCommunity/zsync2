@@ -5,3 +5,5 @@ cmake-build-*/
 *.zsync2
 *testfile*
 *.bak
+zsync2*.txt
+*.AppImage*
