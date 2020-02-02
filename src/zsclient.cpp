@@ -37,6 +37,7 @@ namespace zsync2 {
         // there might be more than one seed file
         // using a set to avoid duplicate entries
         std::set<std::string> seedFiles;
+        std::string url_alt = "";
         
         const std::string pathOrUrlToZSyncFile;
         std::string pathToLocalFile;
@@ -606,6 +607,10 @@ namespace zsync2 {
                 return -1;
             }
 
+            if (!url_alt.empty()) {
+                absoluteUrl = url_alt;
+            }
+
             // follow redirections of the URL before passing it to libzsync to avoid unnecessary redirects for
             // multiple range requests
             std::string redirectedUrl;
@@ -750,7 +755,7 @@ namespace zsync2 {
             // copy value for later use
             int okUrls = n;
 
-            if (!url) {
+            if (!url && url_alt.empty()) {
                 issueStatusMessage("no URLs available from zsync?");
                 return false;
             }
@@ -1046,6 +1051,10 @@ namespace zsync2 {
             return true;
         }
     };
+
+    void ZSyncClient::setUrl(const std::string& url_par) {
+        d->url_alt = url_par;
+    }
 
     ZSyncClient::ZSyncClient(const std::string pathOrUrlToZSyncFile, const std::string pathToLocalFile, bool overwrite) {
         d = new Private(pathOrUrlToZSyncFile, pathToLocalFile, overwrite);
