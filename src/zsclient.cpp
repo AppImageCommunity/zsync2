@@ -598,7 +598,7 @@ namespace zsync2 {
             // URL might be relative -- we need an absolute URL to do a fetch
             std::string absoluteUrl;
 
-            if (!makeUrlAbsolute(referer, url, absoluteUrl)) {
+            if (!makeUrlAbsolute(referer, url, absoluteUrl) && url_alt.empty()) {
                 issueStatusMessage("URL '" + url + "' from .zsync file is relative, which cannot be resolved without "
                                    "knowing the URL to the .zsync file (you're most likely trying to use a .zsync "
                                    "file you downloaded from the internet). Without knowing the original URL, it is "
