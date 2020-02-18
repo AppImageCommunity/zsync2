@@ -1057,7 +1057,7 @@ namespace zsync2 {
 
     void ZSyncClient::newUrl(const std::string& url) {
         d->userSpecifiedUrl = url;
-	d->userSpecifiedUrlisEmpty = url.empty();
+        d->userSpecifiedUrlisEmpty = url.empty();
     }
 
     ZSyncClient::ZSyncClient(const std::string pathOrUrlToZSyncFile, const std::string pathToLocalFile, bool overwrite) {
