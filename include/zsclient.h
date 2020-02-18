@@ -25,9 +25,8 @@ namespace zsync2 {
         // returns true if a message is available and sets passed string, otherwise returns false
         bool nextStatusMessage(std::string& message);
 
-        // sets URL to get the target file
-        // the server
-        void setUrl(const std::string& url_par);
+        // sets new URL to get the target file from a mirror server
+        void newUrl(const std::string& url);
 
         // checks whether a new version is available on the server, i.e., an update is necessary
         // there's several methods available:
