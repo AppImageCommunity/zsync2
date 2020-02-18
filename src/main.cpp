@@ -118,7 +118,7 @@ int main(const int argc, const char** argv) {
 
     // validate parameters
     if(updateUrl) {
-        client.newUrl(updateUrl.Get());
+        client.setNewUrl(updateUrl.Get());
     }
 
     // unimplemented flags

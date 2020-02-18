@@ -26,7 +26,7 @@ namespace zsync2 {
         bool nextStatusMessage(std::string& message);
 
         // sets new URL to get the target file from a mirror server
-        void newUrl(const std::string& url);
+        void setNewUrl(const std::string& url);
 
         // checks whether a new version is available on the server, i.e., an update is necessary
         // there's several methods available:
