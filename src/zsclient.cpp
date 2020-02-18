@@ -603,7 +603,7 @@ namespace zsync2 {
             if (!userSpecifiedUrlisEmpty) {
                 absoluteUrl = userSpecifiedUrl;
             }
-	    else {
+            else {
                         if (!makeUrlAbsolute(referer, url, absoluteUrl)) {
                             issueStatusMessage("URL '" + url + "' from .zsync file is relative, which cannot be resolved without "
                                                "knowing the URL to the .zsync file (you're most likely trying to use a .zsync "
@@ -612,7 +612,7 @@ namespace zsync2 {
                                                "-u flag, or edit and fix the lines in the .zsync file directly.");
                             return -1;
                         }
-	    }
+            }
 
             // follow redirections of the URL before passing it to libzsync to avoid unnecessary redirects for
             // multiple range requests
