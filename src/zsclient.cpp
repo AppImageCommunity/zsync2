@@ -314,8 +314,10 @@ namespace zsync2 {
                     auto response = session.Get();
 
                     bool digestVerified;
-                    if (!verifyInstanceDigest(verificationResponse, response, digestVerified))
+                    if (!verifyInstanceDigest(verificationResponse, response, digestVerified)) {
+                        issueStatusMessage(verificationResponse.error.message);
                         return nullptr;
+                    }
 
                     // expecting a 200 response
                     if (!checkResponseForError(response, 200))
