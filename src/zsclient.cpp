@@ -320,8 +320,10 @@ namespace zsync2 {
                     }
 
                     // expecting a 200 response
-                    if (!checkResponseForError(response, 200))
-                        return nullptr;
+                    if (!checkResponseForError(response, 200)) {
+                      issueStatusMessage("Response:" + response.error.message);
+                      return nullptr;
+                    }
 
                     std::copy(response.text.begin(), response.text.end(), std::back_inserter(buffer));
                 }
