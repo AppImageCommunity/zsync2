@@ -33,10 +33,10 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 # versioning data
 set(VERSION "2.0.0-alpha-1")
 
-if("$ENV{TRAVIS_BUILD_NUMBER}" STREQUAL "")
+if("$ENV{GITHUB_RUN_NUMBER}" STREQUAL "")
     set(BUILD_NUMBER "<local dev build>")
 else()
-    set(BUILD_NUMBER "$ENV{TRAVIS_BUILD_NUMBER}")
+    set(BUILD_NUMBER "$ENV{GITHUB_RUN_NUMBER}")
 endif()
 
 # read Git revision ID
