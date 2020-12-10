@@ -19,7 +19,7 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: AppImage x86_64
-          path: AppImageUpdate*.AppImage*
+          path: zsync*.AppImage*
 
   appimage-i386:
     name: AppImage i386
@@ -37,7 +37,7 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: AppImage i386
-          path: AppImageUpdate*.AppImage*
+          path: zsync*.AppImage*
 
   upload:
     name: Create release and upload artifacts
@@ -56,4 +56,4 @@ jobs:
         run: |
             wget -q https://github.com/TheAssassin/pyuploadtool/releases/download/continuous/pyuploadtool-x86_64.AppImage
             chmod +x pyuploadtool-x86_64.AppImage
-            ./pyuploadtool-x86_64.AppImage **/AppImageUpdate*.AppImage*
+            ./pyuploadtool-x86_64.AppImage **/zsync*.AppImage*
