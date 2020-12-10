@@ -7,3 +7,4 @@ cmake-build-*/
 *.bak
 zsync2*.txt
 *.AppImage*
+*.swp
