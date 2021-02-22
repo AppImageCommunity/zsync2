@@ -31,6 +31,9 @@ set(ZSYNC2_HDRS
 )
 set(ZSYNC2_SRCS zsclient.cpp legacy_http.c legacy_progress.c zsmake.cpp)
 
+# Suppress all g++ warnings from legacy_http.c
+set_source_files_properties(legacy_http.c PROPERTIES COMPILE_OPTIONS $<$<CXX_COMPILER_ID:GNU>:-w>)
+
 # core library
 add_library(libzsync2 ${ZSYNC2_SRCS})
 # since the target is called libsomething, one doesn't need CMake's additional lib prefix

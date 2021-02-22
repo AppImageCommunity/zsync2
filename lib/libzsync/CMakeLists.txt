@@ -10,6 +10,9 @@ enable_testing()
 # add actual library
 add_library(libzsync zsync.c zmap.c sha1.c)
 
+# Suppress all g++ warnings from zsync.c and zmap.c
+set_source_files_properties(zsync.c zmap.c PROPERTIES COMPILE_OPTIONS $<$<CXX_COMPILER_ID:GNU>:-w>)
+
 # since the target is called libsomething, one doesn't need CMake's additional lib prefix
 set_target_properties(libzsync PROPERTIES PREFIX "")
 
