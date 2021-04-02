@@ -74,8 +74,8 @@ struct http_file
     } handle;
 
     char *buffer;
-    size_t buffer_len;
-    size_t buffer_pos;
+    uint64_t buffer_len;
+    uint64_t buffer_pos;
     int still_running;
 };
 
@@ -340,9 +340,9 @@ static int fill_buffer(HTTP_FILE *file, size_t want, CURLM* multi_handle)
  *
  * Removes `want` bytes from the front of the buffer.
  */
-static int use_buffer(HTTP_FILE *file, int want)
+static int use_buffer(HTTP_FILE *file, uint64_t want)
 {
-    if((file->buffer_pos - want) <= 0){
+    if(file->buffer_pos <= want){
         /* trash the buffer */
         if(file->buffer){
             free(file->buffer);
@@ -509,7 +509,7 @@ static void buflwr(char *s) {
 int range_fetch_read_http_headers(struct range_fetch *rf) {
     char buf[512];
     int status;
-    int seen_location = 0;
+    uint64_t seen_location = 0;
 
     {                           /* read status line */
         char *p;
@@ -580,7 +580,7 @@ int range_fetch_read_http_headers(struct range_fetch *rf) {
         if (status == 206 && !strcmp(buf, "content-range")) {
             /* Okay, we're getting a non-MIME block from the remote. Get the
              * range and set our state appropriately */
-            int from, to;
+            uint64_t from, to;
             sscanf(p, "bytes " OFF_T_PF "-" OFF_T_PF "/", &from, &to);
             if (from <= to) {
                 rf->block_left = to + 1 - from;
