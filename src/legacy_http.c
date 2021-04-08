@@ -571,7 +571,7 @@ int range_fetch_read_http_headers(struct range_fetch *rf) {
         p += 2;
         buflwr(buf);
         {   /* Remove the trailing \r\n from the value */
-            int len = strcspn(p, "\r\n");
+            uint64_t len = strcspn(p, "\r\n");
             p[len] = 0;
         }
         /* buf is the header name (lower-cased), p the value */
