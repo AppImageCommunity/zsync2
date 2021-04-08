@@ -21,17 +21,8 @@
 # define SIZE_T_PF "%u"
 #endif
 
-#if SIZEOF_OFF_T == 8
-# ifdef PRIu64
-#  define OFF_T_PF "%" PRIu64
-# else
-#  define OFF_T_PF "%llu"
-# endif
+#ifdef PRIu64
+# define OFF_T_PF "%" PRIu64
 #else
-# ifdef PRIu32
-#  define OFF_T_PF "%" PRIu32
-# else
-#  define OFF_T_PF "%lu"
-# endif
+# define OFF_T_PF "%llu"
 #endif
-
