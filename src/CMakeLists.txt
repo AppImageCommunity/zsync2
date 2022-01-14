@@ -6,6 +6,13 @@ set(CMAKE_POSITION_INDEPENDENT_CODE true)
 # fix CPR target
 target_include_directories(cpr PUBLIC ${CPR_INCLUDE_DIRS})
 
+set(zsync2_public_headers
+    ${PROJECT_SOURCE_DIR}/include/zsutil.h
+    ${PROJECT_SOURCE_DIR}/include/zsclient.h
+    ${PROJECT_SOURCE_DIR}/include/zsglobal.h
+    ${PROJECT_SOURCE_DIR}/include/zsmake.h
+)
+
 # core library
 add_library(libzsync2 SHARED
     zsclient.cpp
@@ -14,14 +21,14 @@ add_library(libzsync2 SHARED
     zsmake.cpp
     ${ZSYNC2_SRCS} ${ZSYNC2_HDRS}
     format_string.h
-    ${CMAKE_CURRENT_BINARY_DIR}/config.h
-    ${PROJECT_SOURCE_DIR}/include/zsutil.h
-    ${PROJECT_SOURCE_DIR}/include/zsclient.h
-    ${PROJECT_SOURCE_DIR}/include/zsglobal.h
-    ${PROJECT_SOURCE_DIR}/include/zsmake.h
+    ${PROJECT_BINARY_DIR}/config.h
+    ${zsync2_public_headers}
 )
 # since the target is called libsomething, one doesn't need CMake's additional lib prefix
-set_target_properties(libzsync2 PROPERTIES PREFIX "")
+set_target_properties(libzsync2 PROPERTIES
+    PREFIX ""
+    PUBLIC_HEADER "${zsync2_public_headers}"
+)
 target_link_libraries(libzsync2 PRIVATE cpr libzsync hashlib)
 target_include_directories(libzsync2
     PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
@@ -50,9 +57,16 @@ target_link_libraries(zsyncmake2 PRIVATE cpr)
 
 # install targets
 install(
-    TARGETS zsync2 libzsync2 zsyncmake2
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    TARGETS libzsync2
+    EXPORT libzsync2
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+    COMPONENT libzsync2
+)
+
+install(
+    TARGETS zsync2 zsyncmake2
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    COMPONENT zsync2
 )

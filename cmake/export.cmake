@@ -2,13 +2,6 @@
 cmake_minimum_required(VERSION 3.15)
 set(CMP0090 NEW)
 
-# set up installion of exported targets (consider libzsync2 a namespace for use in CMake)
-install(
-    TARGETS libzsync2
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    EXPORT libzsync2
-)
-
 # allow import from current build tree
 export(
     TARGETS libzsync2
@@ -20,7 +13,7 @@ export(
 # note that the targets must be install(... EXPORT zsync) in order for this to work (consider libzsync2 a namespace)
 install(
     EXPORT libzsync2
-    DESTINATION lib/cmake/zsync2
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/zsync2
 )
 
 include(CMakePackageConfigHelpers)
@@ -42,5 +35,5 @@ write_basic_package_version_file(
 install(FILES
     "${PROJECT_BINARY_DIR}/cmake/zsync2Config.cmake"
     "${PROJECT_BINARY_DIR}/cmake/zsync2ConfigVersion.cmake"
-    DESTINATION lib/cmake/zsync2
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/zsync2
 )

@@ -62,9 +62,9 @@ execute_process(
 
 # config.h contains some global defines, our config.h.in is a modified version of the upstream config.h.in to make it
 # integrate with CMake
-configure_file(src/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/config.h)
+configure_file(src/config.h.in ${PROJECT_BINARY_DIR}/config.h)
 # since there's headers in the build directory now, include that as well
-include_directories(${CMAKE_CURRENT_BINARY_DIR})
+include_directories(${PROJECT_BINARY_DIR})
 
 # find out which platform we're building for
 if(UNIX)
