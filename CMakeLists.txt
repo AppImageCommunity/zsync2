@@ -9,6 +9,9 @@ include(CTest)
 include(CheckFunctionExists)
 include(CheckIncludeFiles)
 
+# install into proper lib dirs on Linux
+include(GNUInstallDirs)
+
 # platform checks
 foreach(header inttypes memory stdint stdlib strings sys/stat sys/types unistd time)
     string(REPLACE "/" "_" underscore_header "${header}")

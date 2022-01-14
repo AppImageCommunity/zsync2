@@ -5,7 +5,7 @@ set(CMP0090 NEW)
 # set up installion of exported targets (consider libzsync2 a namespace for use in CMake)
 install(
     TARGETS libzsync2
-    DESTINATION lib
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}
     EXPORT libzsync2
 )
 
