@@ -52,9 +52,9 @@ execute_process(
 
 # get current date
 execute_process(
-        COMMAND env LC_ALL=C date -u "+%Y-%m-%d %H:%M:%S %Z"
-        OUTPUT_VARIABLE BUILD_DATE
-        OUTPUT_STRIP_TRAILING_WHITESPACE
+    COMMAND env LC_ALL=C date -u "+%Y-%m-%d %H:%M:%S %Z"
+    OUTPUT_VARIABLE BUILD_DATE
+    OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 
 # config.h contains some global defines, our config.h.in is a modified version of the upstream config.h.in to make it

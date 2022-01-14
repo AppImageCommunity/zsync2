@@ -1,27 +1,18 @@
-set(CMAKE_MINIMUM_REQUIRED_VERSION 3.2)
+cmake_minimum_required(VERSION 3.2)
 
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_POSITION_INDEPENDENT_CODE true)
 
-if(LIBCURL_FOUND)
-    add_definitions(-DHAVE_LIBCURL=1)
-endif()
-if(LIBSOCKET_FOUND)
-    add_definitions(-DHAVE_LIBSOCKET=1)
-endif()
+# fix CPR target
+target_include_directories(cpr PUBLIC ${CPR_INCLUDE_DIRS})
 
-# include cpr
-include_directories(${CPR_INCLUDE_DIRS})
-
-# config.h contains some global defines, our config.h.in is a modified version of the upstream config.h.in to make it
-# integrate with CMake
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/config.h)
-# since there's headers in the build directory now, include that as well
-include_directories(${CMAKE_CURRENT_BINARY_DIR})
-
-set(ZSYNC2_DEPS ${CPR_LIBRARIES} libzsync hashlib)
-set(LIBZSYNC2_DEPS ${ZSYNC2_DEPS})
-set(ZSYNC2_HDRS
+# core library
+add_library(libzsync2 SHARED
+    zsclient.cpp
+    legacy_http.c
+    legacy_progress.c
+    zsmake.cpp
+    ${ZSYNC2_SRCS} ${ZSYNC2_HDRS}
     format_string.h
     ${CMAKE_CURRENT_BINARY_DIR}/config.h
     ${PROJECT_SOURCE_DIR}/include/zsutil.h
@@ -29,24 +20,33 @@ set(ZSYNC2_HDRS
     ${PROJECT_SOURCE_DIR}/include/zsglobal.h
     ${PROJECT_SOURCE_DIR}/include/zsmake.h
 )
-set(ZSYNC2_SRCS zsclient.cpp legacy_http.c legacy_progress.c zsmake.cpp)
-
-# core library
-add_library(libzsync2 ${ZSYNC2_SRCS})
 # since the target is called libsomething, one doesn't need CMake's additional lib prefix
 set_target_properties(libzsync2 PROPERTIES PREFIX "")
-target_link_libraries(libzsync2 PUBLIC ${LIBZSYNC2_DEPS})
-target_include_directories(libzsync2 PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>)
+target_link_libraries(libzsync2 PRIVATE cpr libzsync hashlib)
+target_include_directories(libzsync2
+    PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+    INTERFACE $<INSTALL_INTERFACE:include>
+)
+
+if(LIBCURL_FOUND)
+    target_compile_definitions(libzsync2 PRIVATE HAVE_LIBCURL=1)
+endif()
+if(LIBSOCKET_FOUND)
+    target_compile_definitions(libzsync2 PRIVATE HAVE_LIBSOCKET=1)
+endif()
 
 # core executable
-add_executable(zsync2 ${ZSYNC2_SRCS} ${ZSYNC2_HDRS} main.cpp)
-target_include_directories(zsync2 PRIVATE ${PROJECT_SOURCE_DIR}/include)
-target_link_libraries(zsync2 PRIVATE ${LIBZSYNC2_DEPS} args)
+add_executable(zsync2 main.cpp)
+target_link_libraries(zsync2 PRIVATE libzsync2 args)
 target_compile_definitions(zsync2 PRIVATE -DZSYNC_STANDALONE)
+# TODO: get rid of this
+target_link_libraries(zsync2 PRIVATE cpr)
 
 ## zsyncmake2 executable
-add_executable(zsyncmake2 ${ZSYNC2_SRCS} ${ZSYNC2_HDRS} make_main.cpp)
-target_link_libraries(zsyncmake2 ${ZSYNC2_DEPS} args)
+add_executable(zsyncmake2 make_main.cpp)
+target_link_libraries(zsyncmake2 PRIVATE libzsync2 args)
+# TODO: get rid of this
+target_link_libraries(zsyncmake2 PRIVATE cpr)
 
 # install targets
 install(
