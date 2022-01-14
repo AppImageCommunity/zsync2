@@ -88,3 +88,6 @@ add_subdirectory(src)
 
 # add unit tests
 add_subdirectory(tests)
+
+# finally, generate export configs
+include(cmake/export.cmake)
