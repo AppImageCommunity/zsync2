@@ -1,6 +1,8 @@
 // system headers
 #include <arpa/inet.h>
 #include <cmath>
+#include <cstring>
+#include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <iterator>
