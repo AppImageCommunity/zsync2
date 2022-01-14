@@ -2,9 +2,11 @@
 #include "zsglobal.h"
 
 // system includes
-#include <iostream>
+#include <algorithm>
 #include <deque>
+#include <fstream>
 #include <fcntl.h>
+#include <iostream>
 #include <set>
 #include <sys/stat.h>
 #include <utility>

@@ -19,7 +19,7 @@ add_library(libzsync2 SHARED
     legacy_http.c
     legacy_progress.c
     zsmake.cpp
-    ${ZSYNC2_SRCS} ${ZSYNC2_HDRS}
+    zsutil.cpp
     format_string.h
     ${PROJECT_BINARY_DIR}/config.h
     ${zsync2_public_headers}
