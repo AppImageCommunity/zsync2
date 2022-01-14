@@ -11,6 +11,7 @@ set(zsync2_public_headers
     ${PROJECT_SOURCE_DIR}/include/zsclient.h
     ${PROJECT_SOURCE_DIR}/include/zsglobal.h
     ${PROJECT_SOURCE_DIR}/include/zsmake.h
+    ${PROJECT_SOURCE_DIR}/include/zshash.h
 )
 
 # core library
@@ -29,7 +30,10 @@ set_target_properties(libzsync2 PROPERTIES
     PREFIX ""
     PUBLIC_HEADER "${zsync2_public_headers}"
 )
-target_link_libraries(libzsync2 PRIVATE cpr libzsync hashlib)
+target_link_libraries(libzsync2
+    PRIVATE cpr libzsync
+    PUBLIC PkgConfig::libgcrypt
+)
 target_include_directories(libzsync2
     PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
     INTERFACE $<INSTALL_INTERFACE:include>

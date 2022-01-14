@@ -16,16 +16,15 @@
 #include <cpr/cpr.h>
 
 extern "C" {
-    #include <hashlib/md5.h>
-    #include <hashlib/sha1.h>
-    #include <hashlib/sha256.h>
     #include <zsync.h>
     #include <zlib.h>
 }
 
 // local includes
 #include "zsclient.h"
+#include "zshash.h"
 #include "zsutil.h"
+
 extern "C" {
     #include "legacy_http.h"
     #ifdef ZSYNC_STANDALONE
@@ -203,8 +202,7 @@ namespace zsync2 {
                                 if (toLower(algorithm) == "md5") {
                                     digestFound = true;
 
-                                    MD5 md5;
-                                    md5.add(response.text.data(), response.text.size());
+                                    ZSyncHash<GCRY_MD_MD5> md5(response.text);
                                     auto calculatedDigest = md5.getHash();
 
                                     issueStatusMessage("Found MD5 digest: " + digest);
@@ -219,8 +217,7 @@ namespace zsync2 {
                                 } else if (toLower(algorithm) == "sha") {
                                     digestFound = true;
 
-                                    SHA1 sha1;
-                                    sha1.add(response.text.data(), response.text.size());
+                                    ZSyncHash<GCRY_MD_SHA1> sha1(response.text);
                                     auto calculatedDigest = sha1.getHash();
 
                                     issueStatusMessage("Found SHA1 digest: " + digest);
@@ -234,8 +231,7 @@ namespace zsync2 {
                                 } else if (toLower(algorithm) == "sha-256") {
                                     digestFound = true;
 
-                                    SHA256 sha256;
-                                    sha256.add(response.text.data(), response.text.size());
+                                    ZSyncHash<GCRY_MD_SHA256> sha256(response.text);
                                     auto calculatedDigest = sha256.getHash();
 
                                     issueStatusMessage("Found SHA256 digest: " + digest);

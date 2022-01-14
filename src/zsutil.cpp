@@ -168,11 +168,11 @@ namespace zsync2 {
         return out;
     }
 
-    std::string bytesToHex(unsigned char* data, int len) {
+    std::string bytesToHex(const unsigned char* data, size_t len) {
         std::stringstream ss;
         ss << std::hex;
-        for (int i = 0; i < len; ++i)
-            ss << std::setw(2) << std::setfill('0') << (int)data[i];
+        for (decltype(len) i = 0; i < len; ++i)
+            ss << std::setw(2) << std::setfill('0') << ((int) data[i]);
         return ss.str();
     }
 }

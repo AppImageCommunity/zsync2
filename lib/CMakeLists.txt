@@ -1,4 +1,5 @@
-set(CMAKE_MINIMUM_REQUIRED_VERSION 3.2)
+# for pkg-config IMPORTED_TARGET
+cmake_minimum_required(VERSION 3.6)
 
 include_directories(.)
 
@@ -25,6 +26,3 @@ target_include_directories(args INTERFACE args)
 if(NOT TARGET gtest)
     add_subdirectory(gtest EXCLUDE_FROM_ALL)
 endif()
-
-# minimal zlib-licensed hash library
-add_subdirectory(hashlib)

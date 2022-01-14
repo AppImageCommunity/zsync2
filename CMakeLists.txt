@@ -83,6 +83,13 @@ else()
     message(FATAL_ERROR "Unsupported platform: ${CMAKE_SYSTEM_NAME}")
 endif()
 
+# doing this on project level allows all subdirs to use the imported targets
+find_package(PkgConfig)
+
+# we used to ship a minimal, zlib-licensed hash lib as part of zsync2
+# now, we use a system provided crypto library for this purpose
+pkg_check_modules(libgcrypt REQUIRED IMPORTED_TARGET libgcrypt)
+
 # add libraries shipped along with the project
 add_subdirectory(lib)
 

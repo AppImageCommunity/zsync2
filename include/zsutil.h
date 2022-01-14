@@ -41,5 +41,5 @@ namespace zsync2 {
 
     std::string base64Decode(const std::string& in);
 
-    std::string bytesToHex(unsigned char *data, int len);
+    std::string bytesToHex(const unsigned char *data, size_t len);
 }
