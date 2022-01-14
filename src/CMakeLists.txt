@@ -14,42 +14,51 @@ set(zsync2_public_headers
     ${PROJECT_SOURCE_DIR}/include/zshash.h
 )
 
-# core library
-add_library(libzsync2 SHARED
-    zsclient.cpp
-    legacy_http.c
-    legacy_progress.c
-    zsmake.cpp
-    zsutil.cpp
-    format_string.h
-    ${PROJECT_BINARY_DIR}/config.h
-    ${zsync2_public_headers}
-)
-# since the target is called libsomething, one doesn't need CMake's additional lib prefix
-set_target_properties(libzsync2 PROPERTIES
-    PREFIX ""
-    PUBLIC_HEADER "${zsync2_public_headers}"
-)
-target_link_libraries(libzsync2
-    PRIVATE cpr libzsync
-    PUBLIC PkgConfig::libgcrypt
-)
-target_include_directories(libzsync2
-    PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
-    INTERFACE $<INSTALL_INTERFACE:include>
-)
+# at the moment, we need to build libzsync2 twice because of the ZSYNC_STANDALONE macro which controls logging
+# one is the public use library with the alternative status message collection system, the other one is just used in
+# the zsync2 target
+function(add_libzsync2 NAME BUILD_TYPE)
+    add_library("${NAME}" "${BUILD_TYPE}"
+        zsclient.cpp
+        legacy_http.c
+        legacy_progress.c
+        zsmake.cpp
+        zsutil.cpp
+        format_string.h
+        ${PROJECT_BINARY_DIR}/config.h
+        ${zsync2_public_headers}
+    )
+    set_target_properties("${NAME}" PROPERTIES
+        PREFIX ""
+        PUBLIC_HEADER "${zsync2_public_headers}"
+    )
+    target_link_libraries("${NAME}"
+        PRIVATE cpr libzsync
+        # needed for public header-only lib zshash.h
+        PUBLIC PkgConfig::libgcrypt
+    )
+    target_include_directories("${NAME}"
+        PUBLIC "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>"
+        INTERFACE "$<INSTALL_INTERFACE:include>"
+    )
 
-if(LIBCURL_FOUND)
-    target_compile_definitions(libzsync2 PRIVATE HAVE_LIBCURL=1)
-endif()
-if(LIBSOCKET_FOUND)
-    target_compile_definitions(libzsync2 PRIVATE HAVE_LIBSOCKET=1)
-endif()
+    if(LIBCURL_FOUND)
+        target_compile_definitions("${NAME}" PRIVATE HAVE_LIBCURL=1)
+    endif()
+    if(LIBSOCKET_FOUND)
+        target_compile_definitions("${NAME}" PRIVATE HAVE_LIBSOCKET=1)
+    endif()
+endfunction()
+
+add_libzsync2(libzsync2 SHARED)
+
+add_libzsync2(libzsync2_standalone STATIC)
+# this will propagate to target zsync, too
+target_compile_definitions(libzsync2_standalone PUBLIC ZSYNC_STANDALONE)
 
 # core executable
 add_executable(zsync2 main.cpp)
-target_link_libraries(zsync2 PRIVATE libzsync2 args)
-target_compile_definitions(zsync2 PRIVATE -DZSYNC_STANDALONE)
+target_link_libraries(zsync2 PRIVATE libzsync2_standalone args)
 # TODO: get rid of this
 target_link_libraries(zsync2 PRIVATE cpr)
 
