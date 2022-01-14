@@ -58,7 +58,7 @@ target_link_libraries(zsyncmake2 PRIVATE cpr)
 # install targets
 install(
     TARGETS libzsync2
-    EXPORT libzsync2
+    EXPORT zsync2Targets
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
     PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
