@@ -17,6 +17,9 @@ if(NOT USE_SYSTEM_CPR)
     # long term goal is to replace the submodule in some way, e.g., by using prebuilt cpr binaries
     set(BUILD_SHARED_LIBS OFF)
 
+    # make sure that static libraries (especially built cURL libs) can be linked properly
+    set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
     # cannot use system cURL on bionic at the moment, PR with fix sent: https://github.com/libcpr/cpr/pull/696
     ## there is no need to build our own libcurl
     ## in fact, building it as a static lib creates a whole circus of problems, and also takes time
