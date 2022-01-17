@@ -92,6 +92,9 @@ pkg_check_modules(libgcrypt REQUIRED IMPORTED_TARGET libgcrypt)
 
 option(USE_SYSTEM_CPR OFF "Use system-wide installed CPR")
 
+# makes linking to static libraries easier
+option(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
 if(USE_SYSTEM_CPR)
     find_package(cpr REQUIRED)
     add_library(cpr ALIAS cpr::cpr)

@@ -282,14 +282,15 @@ namespace zsync2 {
                         bytes << "bytes=" << currentChunk << "-" << currentChunk + chunkSize - 1;
                         session.SetHeader(cpr::Header{{"range", bytes.str()}});
 
-                        session.SetRedirect(false);
+                        session.SetRedirect(cpr::Redirect{0L});
                         auto verificationResponse = session.Get();
 
 //                        bool digestVerified;
 //                        if (!verifyInstanceDigest(verificationResponse, digestVerified))
 //                            return nullptr;
 
-                        session.SetRedirect(true);
+                        // according to the docs, 50 is the default
+                        session.SetRedirect(cpr::Redirect{50L});
                         auto response = session.Get();
 
                         // expect a range response
@@ -305,10 +306,11 @@ namespace zsync2 {
                         currentChunk += chunkSize;
                     }
                 } else {
-                    session.SetRedirect(false);
+                    session.SetRedirect(cpr::Redirect{0L});
                     auto verificationResponse = session.Get();
 
-                    session.SetRedirect(true);
+                    // 50 is the default value according to the docs
+                    session.SetRedirect(cpr::Redirect{50L});
                     auto response = session.Get();
 
                     bool digestVerified;

@@ -107,7 +107,7 @@ namespace zsync2 {
     }
 
     bool resolveRedirections(const std::string& absoluteUrl, std::string& redirectedUrl) {
-        auto response = cpr::Head(absoluteUrl);
+        auto response = cpr::Head(cpr::Url{absoluteUrl});
 
         // check for proper response code
         // 4xx and 5xx responses can be considered okay for a redirection resolver, as they're valid responses
@@ -116,7 +116,7 @@ namespace zsync2 {
         if (response.status_code >= 300 && response.status_code < 400)
             return false;
 
-        redirectedUrl = response.url;
+        redirectedUrl = response.url.str();
         return true;
     }
 
