@@ -53,6 +53,10 @@ endfunction()
 
 add_libzsync2(libzsync2 SHARED)
 
+# for use as a submodule
+add_libzsync2(libzsync2_static STATIC)
+set_property(TARGET libzsync2_static PROPERTY OUTPUT_NAME libzsync2)
+
 add_libzsync2(libzsync2_standalone STATIC)
 # this will propagate to target zsync, too
 target_compile_definitions(libzsync2_standalone PUBLIC ZSYNC_STANDALONE)
