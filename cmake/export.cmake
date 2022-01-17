@@ -6,7 +6,7 @@ set(CMP0090 NEW)
 export(
     TARGETS libzsync2
     NAMESPACE zsync2::
-    FILE zsync2Targets.cmake
+    FILE ${PROJECT_BINARY_DIR}/cmake/zsync2Targets.cmake
 )
 
 # allow import from install tree
