@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-18.04
     env:
       ARCH: x86_64
-      DIST: xenial
+      DIST: bionic
     steps:
       - uses: actions/checkout@v2
         with:
