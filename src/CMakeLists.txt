@@ -3,9 +3,6 @@ cmake_minimum_required(VERSION 3.2)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_POSITION_INDEPENDENT_CODE true)
 
-# fix CPR target
-target_include_directories(cpr PUBLIC ${CPR_INCLUDE_DIRS})
-
 set(zsync2_public_headers
     ${PROJECT_SOURCE_DIR}/include/zsutil.h
     ${PROJECT_SOURCE_DIR}/include/zsclient.h

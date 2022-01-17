@@ -90,6 +90,13 @@ find_package(PkgConfig)
 # now, we use a system provided crypto library for this purpose
 pkg_check_modules(libgcrypt REQUIRED IMPORTED_TARGET libgcrypt)
 
+option(USE_SYSTEM_CPR OFF "Use system-wide installed CPR")
+
+if(USE_SYSTEM_CPR)
+    find_package(cpr REQUIRED)
+    add_library(cpr ALIAS cpr::cpr)
+endif()
+
 # add libraries shipped along with the project
 add_subdirectory(lib)
 
