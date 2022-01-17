@@ -19,6 +19,9 @@ target_link_libraries(libzsync PRIVATE zsync2_libz PUBLIC librcksum)
 # declare includes
 target_include_directories(libzsync PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
 
+# needed for strptime to work
+target_compile_definitions(libzsync PRIVATE _GNU_SOURCE _XOPEN_SOURCE)
+
 # add tests
 add_executable(sha1test sha1.c sha1test.c)
 add_test(sha1test sha1test)
