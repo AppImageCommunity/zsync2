@@ -41,6 +41,7 @@ function(add_libzsync2 NAME BUILD_TYPE)
         PUBLIC "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>"
         INTERFACE "$<INSTALL_INTERFACE:include>"
     )
+    set_target_properties("${NAME}" PROPERTIES INSTALL_RPATH "\$ORIGIN")
 
     if(LIBCURL_FOUND)
         target_compile_definitions("${NAME}" PRIVATE HAVE_LIBCURL=1)
@@ -61,12 +62,14 @@ add_executable(zsync2 main.cpp)
 target_link_libraries(zsync2 PRIVATE libzsync2_standalone args)
 # TODO: get rid of this
 target_link_libraries(zsync2 PRIVATE cpr)
+set_target_properties(zsync2 PROPERTIES INSTALL_RPATH "\$ORIGIN/../${CMAKE_INSTALL_LIBDIR}")
 
 ## zsyncmake2 executable
 add_executable(zsyncmake2 make_main.cpp)
 target_link_libraries(zsyncmake2 PRIVATE libzsync2 args)
 # TODO: get rid of this
 target_link_libraries(zsyncmake2 PRIVATE cpr)
+set_target_properties(zsyncmake2 PROPERTIES INSTALL_RPATH "\$ORIGIN/../${CMAKE_INSTALL_LIBDIR}")
 
 # install targets
 install(
