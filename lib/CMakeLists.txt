@@ -13,6 +13,9 @@ add_subdirectory(libzsync)
 if(NOT USE_SYSTEM_CPR)
     add_subdirectory(cpr)
     set_property(TARGET cpr PROPERTY POSITION_INDEPENDENT_CODE ON)
+
+    # this hack is still needed to make the bundled cpr work, unfortunately
+    target_include_directories(cpr PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/cpr/include)
 endif()
 
 # it's quite simple dealing with the args library directly from CMake
