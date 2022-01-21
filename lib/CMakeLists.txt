@@ -37,6 +37,6 @@ target_sources(args INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/args/args.hxx")
 target_include_directories(args INTERFACE args)
 
 # Google Test framework
-if(NOT TARGET gtest)
+if(BUILD_TESTING AND NOT TARGET gtest)
     add_subdirectory(gtest EXCLUDE_FROM_ALL)
 endif()
