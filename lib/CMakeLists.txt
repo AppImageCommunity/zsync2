@@ -31,10 +31,12 @@ if(NOT USE_SYSTEM_CPR)
     set_property(TARGET cpr PROPERTY POSITION_INDEPENDENT_CODE ON)
 endif()
 
-# it's quite simple dealing with the args library directly from CMake
-add_library(args INTERFACE)
-target_sources(args INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/args/args.hxx")
-target_include_directories(args INTERFACE args)
+if(NOT USE_SYSTEM_ARGS)
+    # it's quite simple dealing with the args library directly from CMake
+    add_library(args INTERFACE)
+    target_sources(args INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/args/args.hxx")
+    target_include_directories(args INTERFACE args)
+endif()
 
 # Google Test framework
 if(BUILD_TESTING AND NOT TARGET gtest)

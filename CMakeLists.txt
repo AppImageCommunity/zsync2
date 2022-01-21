@@ -91,6 +91,7 @@ find_package(PkgConfig)
 pkg_check_modules(libgcrypt REQUIRED IMPORTED_TARGET libgcrypt)
 
 option(USE_SYSTEM_CPR OFF "Use system-wide installed CPR")
+option(USE_SYSTEM_ARGS OFF "Use system-wide installed args")
 
 # makes linking to static libraries easier
 option(CMAKE_POSITION_INDEPENDENT_CODE ON)
@@ -98,6 +99,13 @@ option(CMAKE_POSITION_INDEPENDENT_CODE ON)
 if(USE_SYSTEM_CPR)
     find_package(cpr REQUIRED)
     add_library(cpr ALIAS cpr::cpr)
+endif()
+
+if(USE_SYSTEM_ARGS)
+    find_package(args REQUIRED)
+
+    # need to create an alias target to ease linking
+    add_library(args ALIAS taywee::args)
 endif()
 
 # add libraries shipped along with the project
