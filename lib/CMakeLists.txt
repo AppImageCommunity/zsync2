@@ -20,10 +20,9 @@ if(NOT USE_SYSTEM_CPR)
     # make sure that static libraries (especially built cURL libs) can be linked properly
     set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-    # cannot use system cURL on bionic at the moment, PR with fix sent: https://github.com/libcpr/cpr/pull/696
-    ## there is no need to build our own libcurl
-    ## in fact, building it as a static lib creates a whole circus of problems, and also takes time
-    #set(CPR_FORCE_USE_SYSTEM_CURL ON)
+    # there is no need to build our own libcurl
+    # in fact, building it as a static lib creates a whole circus of problems, and also takes time
+    set(CPR_FORCE_USE_SYSTEM_CURL ON)
 
     add_subdirectory(cpr)
 
