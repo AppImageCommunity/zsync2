@@ -115,7 +115,9 @@ add_subdirectory(lib)
 add_subdirectory(src)
 
 # add unit tests
-add_subdirectory(tests)
+if(BUILD_TESTING)
+    add_subdirectory(tests)
+endif()
 
 # finally, generate export configs
 include(cmake/export.cmake)
