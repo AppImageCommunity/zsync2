@@ -271,6 +271,23 @@ namespace zsync2 {
                 // request so-called Instance Digest (RFC 3230, RFC 5843)
                 session.SetHeader(cpr::Header{{"want-digest", "sha-512;q=1, sha-256;q=0.9, sha;q=0.2, md5;q=0.1"}});
 
+                // cURL hardcodes the current distro's CA bundle path
+                // in order to use libzsync2 on other distributions (e.g., when used in an AppImage), the right path
+                // must be passed to cURL
+                // we could do this within the library, but it is probably easier to have the caller provide the right
+                // path, since we can just pass one additional path
+                // note that in upstream releases of AppImageUpdate and zsync2, we use cURL versions which search for
+                // a CA bundle in multiple locations
+                {
+                    char* caBundlePath = getenv("SSL_CERT_FILE");
+
+                    if (caBundlePath != nullptr) {
+                        auto sslOptions = cpr::SslOptions{};
+                        sslOptions.SetOption({cpr::ssl::CaInfo{caBundlePath}});
+                        session.SetOption(sslOptions);
+                    }
+                }
+
                 // if interested in headers only, download 1 kiB chunks until end of zsync header is found
                 if (headersOnly && zSyncFileStoredLocallyAlready) {
                     static const auto chunkSize = 1024;
