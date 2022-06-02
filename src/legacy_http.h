@@ -23,3 +23,4 @@ void range_fetch_addranges(struct range_fetch* rf, off_t* ranges, int nranges);
 int get_range_block(struct range_fetch* rf, off_t* offset, unsigned char* data, size_t dlen);
 off_t range_fetch_bytes_down(const struct range_fetch* rf);
 void range_fetch_end(struct range_fetch* rf);
+const char* ca_bundle_path();

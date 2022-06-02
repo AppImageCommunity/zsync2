@@ -134,6 +134,11 @@ void setup_curl_handle(CURL *handle)
     if (verbose!=NULL){
         curl_easy_setopt(handle, CURLOPT_VERBOSE, 1L);
     }
+
+    const char* ca_bundle = ca_bundle_path();
+    if (ca_bundle != NULL) {
+        curl_easy_setopt(handle, CURLOPT_CAINFO, ca_bundle);
+    }
 }
 
 
@@ -784,4 +789,78 @@ void range_fetch_end(struct range_fetch *rf) {
     free(rf->boundary);
     free(rf->url);
     free(rf);
+}
+
+// returns non-zero ("true") on success, 0 ("false") on failure
+int file_exists(const char* path) {
+    struct stat statbuf = {};
+
+    if (stat(path, &statbuf) == 0) {
+        return 1;
+    }
+
+    const int error = errno;
+    if (error != ENOENT) {
+        fprintf(stderr, "zsync2: Unknown error while checking whether file %s exists: %s\n", path, strerror(error));
+    }
+
+    return 0;
+}
+
+// memory returned by this function must not be freed by the user
+const char* ca_bundle_path() {
+    // in case the user specifies a custom file, we use this one instead
+    // TODO: consider merging the user-specified file with the system CA bundle into a temp file
+    const char* path_from_environment = getenv("SSL_CERT_FILE");
+
+    if (path_from_environment != NULL) {
+        return path_from_environment;
+    }
+
+#if CURL_AT_LEAST_VERSION(7, 84, 0)
+    {
+        // (very) recent libcurl versions provide us with a way to query the build-time search path they
+        // use to find a suitable (distro-provided) CA certificate bundle they can hardcode
+        // we can use this value to search for a bundle dynamically in the application
+        CURL* curl = curl_easy_init();
+
+        if (curl != NULL) {
+            CURLcode res;
+            char* curl_provided_path = NULL;
+
+            curl_easy_getinfo(curl, CURLINFO_CAINFO, &curl_provided_path);
+
+            // should be safe to delete the handle and use the returned value, since it is allocated statically within libcurl
+            curl_easy_cleanup(curl);
+
+            if (curl_provided_path != NULL) {
+                if (file_exists(curl_provided_path)) {
+                    return curl_provided_path;
+                }
+            }
+        }
+    }
+#endif
+
+    // this list is a compilation of other AppImage projects' lists and the one used in libcurl's build system's autodiscovery
+    // should cover most Linux distributions
+    static const char* const possible_ca_bundle_paths[] = {
+        "/etc/pki/tls/cacert.pem",
+        "/etc/pki/tls/cert.pem",
+        "/etc/pki/tls/certs/ca-bundle.crt",
+        "/etc/ssl/ca-bundle.pem",
+        "/etc/ssl/cert.pem",
+        "/etc/ssl/certs/ca-certificates.crt",
+        "/usr/local/share/certs/ca-root-nss.crt",
+        "/usr/share/ssl/certs/ca-bundle.crt",
+    };
+
+    for (size_t i = 0; i < sizeof(possible_ca_bundle_paths); ++i) {
+        const char* path_to_check = possible_ca_bundle_paths[i];
+        if (file_exists(path_to_check)) {
+            return path_to_check;
+        }
+    }
+
+    return NULL;
 }
