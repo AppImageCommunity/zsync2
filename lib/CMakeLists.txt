@@ -61,10 +61,20 @@ if(NOT USE_SYSTEM_CPR)
 endif()
 
 if(NOT USE_SYSTEM_ARGS)
-    # it's quite simple dealing with the args library directly from CMake
-    add_library(args INTERFACE)
-    target_sources(args INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/args/args.hxx")
-    target_include_directories(args INTERFACE args)
+    function(import_args)
+        set(ARGS_MAIN_PROJECT OFF)
+        set(ARGS_BUILD_EXAMPLE OFF)
+        set(ARGS_BUILD_UNITTESTS OFF)
+
+        include(FetchContent)
+        FetchContent_Declare(args
+            GIT_REPOSITORY https://github.com/Taywee/args
+            GIT_TAG 6.4.6
+        )
+        FetchContent_MakeAvailable(args)
+    endfunction()
+
+    import_args()
 endif()
 
 # Google Test framework
