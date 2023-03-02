@@ -38,6 +38,6 @@ if(NOT USE_SYSTEM_ARGS)
 endif()
 
 # Google Test framework
-if(BUILD_TESTING AND NOT TARGET gtest)
-    add_subdirectory(gtest EXCLUDE_FROM_ALL)
+if(BUILD_TESTING AND NOT TARGET GTest::gtest)
+    find_package(GTest REQUIRED)
 endif()
