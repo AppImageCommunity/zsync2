@@ -41,7 +41,7 @@ if(NOT USE_SYSTEM_CPR)
                     set(CPR_FORCE_USE_SYSTEM_CURL ON)
                 endif()
             else()
-                message(WARNING "CPR_USE_SYSTEM_CURL is set to ${CPR_USE_SYSTEM_CURL} by the user")
+                message(WARNING "CPR_FORCE_USE_SYSTEM_CURL is set to ${CPR_FORCE_USE_SYSTEM_CURL} by the user")
             endif()
         endif()
 
