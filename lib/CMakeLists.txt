@@ -26,14 +26,21 @@ if(NOT USE_SYSTEM_CPR)
 
         # if a system provided installed libcurl is too "new", we want to have CPR build its own
         # otherwise, we want to use the system provided library
-        # this way, we can build against a system-wide libcurl on older systems (e.g., Ubuntu focal) while allowing development on newer systems
-        # see
-        find_package(CURL)
-        if(CURL_FOUND)
-            message(STATUS "Found libcurl ${CURL_VERSION_STRING}")
+        # this way, we can build against a system-wide libcurl on older systems (e.g., Ubuntu focal) while
+        # allowing development on newer systems
+        # see https://github.com/libcpr/cpr/issues/804
+        # note: don't use find_package(CURL), for some reason it'd cause zsync2 to link to the system libcurl in
+        # addition to the statically linked CPR; we just need the version
+        find_package(PkgConfig REQUIRED)
+        pkg_search_module(PKGCONFIG_CURL libcurl)
+        set(PKGCONFIG_CURL_FOUND ${PKGCONFIG_CURL_FOUND} PARENT_SCOPE)
+        set(PKGCONFIG_CURL_VERSION ${PKGCONFIG_CURL_VERSION} PARENT_SCOPE)
+
+        if(PKGCONFIG_CURL_FOUND)
+            message(STATUS "Found libcurl ${PKGCONFIG_CURL_VERSION}")
 
             if(NOT DEFINED CPR_FORCE_USE_SYSTEM_CURL)
-                if (CURL_VERSION_STRING VERSION_LESS_EQUAL 7.80.0)
+                if (PKGCONFIG_CURL_VERSION VERSION_LESS_EQUAL 7.80.0)
                     message(STATUS "libcurl is old enough to work with CPR, so we use the system one (use -DCPR_FORCE_USE_SYSTEM_CURL=OFF to change this behavior)")
                     set(CPR_FORCE_USE_SYSTEM_CURL ON)
                 else()
@@ -43,6 +50,8 @@ if(NOT USE_SYSTEM_CPR)
             else()
                 message(WARNING "CPR_FORCE_USE_SYSTEM_CURL is set to ${CPR_FORCE_USE_SYSTEM_CURL} by the user")
             endif()
+        else()
+            message(WARNING "Could not find libcurl with pkg-config, relying on CPR auto-configuration")
         endif()
 
         include(FetchContent)
