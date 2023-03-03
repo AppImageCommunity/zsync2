@@ -76,8 +76,3 @@ if(NOT USE_SYSTEM_ARGS)
 
     import_args()
 endif()
-
-# Google Test framework
-if(BUILD_TESTING AND NOT TARGET GTest::gtest)
-    find_package(GTest REQUIRED)
-endif()
