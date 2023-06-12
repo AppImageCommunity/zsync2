@@ -3,6 +3,7 @@
 #include <functional>
 #include <map>
 #include <string>
+#include <cstdint>
 
 namespace zsync2 {
     class ZSyncFileMaker {
