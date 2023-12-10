@@ -11,8 +11,7 @@ trap _cleanup EXIT
 
 cd "$tempdir"
 
-#git clone https://github.com/google/googletest -b release-1.8.1 .
-git clone https://github.com/google/googletest -b v1.13.0 .
+git clone https://github.com/google/googletest -b v1.13.0 . --depth 1
 
 mkdir build
 cd build
