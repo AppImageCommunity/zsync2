@@ -7,7 +7,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ARCH: [x86_64, i386]
+        ARCH: [x86_64, aarch64, armhf]
 
     name: AppImage ${{ matrix.ARCH }}
     runs-on: ubuntu-20.04
