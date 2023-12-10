@@ -31,8 +31,6 @@ CMAKE_ARCH="${CMAKE_ARCH:-"$ARCH"}"
 cwd="$PWD"
 repo_root="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")"/..)"
 
-# needed to keep user ID in and outside Docker in sync to be able to write to workspace directory
-uid="$(id -u)"
 image=zsync2-build:"$ARCH"
 
 # building local image to "cache" installed dependencies for subsequent builds
@@ -46,6 +44,11 @@ docker build \
 
 tty_args=()
 if [ -t 0 ]; then tty_args+=("-t"); fi
+
+# run the build with the current user to
+#   a) make sure root is not required for builds
+#   b) allow the build scripts to "mv" the binaries into the /out directory
+uid="$(id -u)"
 
 # mount workspace read-only, trying to make sure the build doesn't ever touch the source code files
 # of course, this only works reliably if you don't run this script from that directory
