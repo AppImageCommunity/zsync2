@@ -7,26 +7,31 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ARCH: [x86_64, i686, aarch64, armhf]
+        include:
+          - ARCH: x86_64
+            RUNS_ON: ubuntu-24.04
+          - ARCH: i686
+            RUNS_ON: ubuntu-24.04
+          - ARCH: aarch64
+            RUNS_ON: ubuntu-24.04-arm
+          - ARCH: armhf
+            RUNS_ON: ubuntu-24.04-arm
 
     name: AppImage ${{ matrix.ARCH }}
-    runs-on: ubuntu-20.04
+    runs-on: ${{ matrix.RUNS_ON }}
     env:
       ARCH: ${{ matrix.ARCH }}
       DIST: bionic
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
         with:
           submodules: recursive
-
-      - name: Set up QEMU integration for Docker
-        run: docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
 
       - name: Build AppImage in Docker
         run: bash -ex ci/build-in-docker.sh
 
       - name: Archive artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: AppImage ${{ matrix.ARCH }}
           path: zsync*.AppImage*
@@ -35,10 +40,10 @@ jobs:
     name: Create release and upload artifacts
     needs:
       - appimage
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
       - name: Download artifacts
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
       - name: Inspect directory after downloading artifacts
         run: ls -alFR
       - name: Create release and upload artifacts
