@@ -10,7 +10,7 @@ jobs:
         ARCH: [x86_64, i686, aarch64, armhf]
 
     name: AppImage ${{ matrix.ARCH }}
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     env:
       ARCH: ${{ matrix.ARCH }}
       DIST: bionic
@@ -35,7 +35,7 @@ jobs:
     name: Create release and upload artifacts
     needs:
       - appimage
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
       - name: Download artifacts
         uses: actions/download-artifact@v2
