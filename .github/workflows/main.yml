@@ -15,7 +15,7 @@ jobs:
       ARCH: ${{ matrix.ARCH }}
       DIST: bionic
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
         with:
           submodules: recursive
 
@@ -26,7 +26,7 @@ jobs:
         run: bash -ex ci/build-in-docker.sh
 
       - name: Archive artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: AppImage ${{ matrix.ARCH }}
           path: zsync*.AppImage*
@@ -38,7 +38,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download artifacts
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
       - name: Inspect directory after downloading artifacts
         run: ls -alFR
       - name: Create release and upload artifacts
