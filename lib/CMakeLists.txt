@@ -78,7 +78,7 @@ if(NOT USE_SYSTEM_ARGS)
         include(FetchContent)
         FetchContent_Declare(args
             GIT_REPOSITORY https://github.com/Taywee/args
-            GIT_TAG 6.4.6
+            GIT_TAG 114200a9ad5fe06c8dea76e15d92325695cf3e34
         )
         FetchContent_MakeAvailable(args)
     endfunction()
