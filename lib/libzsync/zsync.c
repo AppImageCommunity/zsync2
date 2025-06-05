@@ -457,12 +457,12 @@ const char *const *zsync_get_urls(struct zsync_state *zs, int *n, int *t) {
     if (zs->zmap && zs->nzurl) {
         *n = zs->nzurl;
         *t = 1;
-        return zs->zurl;
+        return (const char *const *)zs->zurl;
     }
     else {
         *n = zs->nurl;
         *t = 0;
-        return zs->url;
+        return (const char *const *)zs->url;
     }
 }
 
@@ -947,7 +947,7 @@ static int zsync_receive_data_compressed(struct zsync_receiver *zr,
 
     if (zr->strm.total_in == 0 || offset != zr->strm.total_in) {
         zsync_configure_zstream_for_zdata(zr->zs, &(zr->strm), offset,
-                                          &(zr->outoffset));
+                                          (long long *)&(zr->outoffset));
 
         /* On first iteration, we might be reading an incomplete block from zsync's point of view. Limit avail_out so we can stop after doing that and realign with the buffer. */
         zr->strm.avail_out = blocksize - (zr->outoffset % blocksize);
