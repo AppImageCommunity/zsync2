@@ -102,16 +102,18 @@ namespace zsync2 {
         bool writeBlockSums(const buffer_t& buffer, size_t bytesRead) {
             buffer_t checksum(CHECKSUM_SIZE);
 
-            // add padding to last block
-            if (bytesRead < blockSize)
-                std::fill(checksum.begin() + bytesRead, checksum.end(), 0);
+            // Create a copy of the buffer for processing, padding it to blockSize if needed
+            buffer_t padded_buffer(buffer.begin(), buffer.begin() + bytesRead);
+            if (bytesRead < blockSize) {
+                padded_buffer.resize(blockSize, 0);  // pad with zeros to reach blockSize
+            }
 
             // sometimes, the inconsistent use of char and unsigned char within the old zsync code base can get
             // annoying...
-            auto r = rcksum_calc_rsum_block(reinterpret_cast<const unsigned char*>(buffer.data()), blockSize);
+            auto r = rcksum_calc_rsum_block(reinterpret_cast<const unsigned char*>(padded_buffer.data()), blockSize);
             rcksum_calc_checksum(
                 reinterpret_cast<unsigned char*>(checksum.data()),
-                reinterpret_cast<const unsigned char*>(buffer.data()),
+                reinterpret_cast<const unsigned char*>(padded_buffer.data()),
                 blockSize
             );
             r.a = htons(r.a);
@@ -150,6 +152,21 @@ namespace zsync2 {
 
                     return false;
                 }
+            }
+
+            // Handle the last partial block if any data was read but stream hit EOF
+            if (inFile.eof()) {
+                auto bytesRead = (size_t) inFile.gcount();
+                if (bytesRead > 0) {
+                    SHA1Update(&sha1Ctx, reinterpret_cast<const uint8_t*>(buffer.data()), bytesRead);
+                    writeBlockSums(buffer, bytesRead);
+                    length += bytesRead;
+                }
+            } else if (inFile.fail() || inFile.bad()) {
+                auto error = errno;
+                std::string messagePrefix = "Failed to calculate block sums: ";
+                logMessage(messagePrefix + strerror(error));
+                return false;
             }
 
             return true;
