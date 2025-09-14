@@ -111,12 +111,10 @@ struct range_fetch {
  */
 void setup_curl_handle(CURL *handle)
 {
-    char *pr = getenv("http_proxy");
     curl_easy_setopt(handle, CURLOPT_FOLLOWLOCATION, 1L);
 
-    if (pr != NULL){
-        curl_easy_setopt(handle, CURLOPT_PROXY, pr);
-    }
+    /* libcurl automatically handles all proxy environment variables, so no manual
+     * configuration needed */
 
     // no longer supported for obvious security reasons
     // if(http_ssl_insecure){
@@ -516,8 +514,15 @@ int range_fetch_read_http_headers(struct range_fetch *rf) {
     int status;
     uint64_t seen_location = 0;
 
-    {                           /* read status line */
+    /* Read status lines until we find the final server response.
+     * When using HTTPS through a proxy, we may see:
+     * 1. HTTP/1.1 200 Connection established (proxy CONNECT response)
+     * 2. HTTP/1.1 206 Partial Content (actual server response)
+     * We need to process the final server response, not the proxy response.
+     */
+    {
         char *p;
+        long connect_code;
 
         if (rfgets(buf, sizeof(buf), rf) == NULL){
             /* most likely unexpected EOF from server */
@@ -531,6 +536,46 @@ int range_fetch_read_http_headers(struct range_fetch *rf) {
             return -1;
         }
         status = atoi(p + 1);
+        log_message("Parsed HTTP status code: %d from response line: %s", status, buf);
+        
+        /* Check if this is an HTTP status line */
+        connect_code = 0;
+        curl_easy_getinfo(rf->file->handle.curl, CURLINFO_HTTP_CONNECTCODE, &connect_code);
+        if (connect_code != 0) {
+            /* CONNECT attempted */
+            if ((connect_code / 100) != 2) {
+                log_message("Proxy CONNECT failed with HTTP %ld", connect_code);
+                return -1;
+            }
+            /* CONNECT succeeded: if this status line is that CONNECT response, skip its headers */
+            if (status == (int)connect_code) {
+                log_message("Detected proxy CONNECT response - skipping proxy headers and reading actual server response");
+                while (1) {
+                    if (rfgets(buf, sizeof(buf), rf) == NULL) {
+                        log_message("EOF while skipping proxy CONNECT headers");
+                        return -1;
+                    }
+                    /* Empty line marks end of headers */
+                    if (buf[0] == '\r' || buf[0] == '\0') break;
+                }
+                /* Move on to the real origin response */
+                if (rfgets(buf, sizeof(buf), rf) == NULL){
+                    /* most likely unexpected EOF from server */
+                    log_message("EOF from server\n");
+                    return -1;
+                }
+                if (buf[0] == 0)
+                    return 0;           /* EOF, caller decides if that's an error */
+                if (memcmp(buf, "HTTP/", 5) != 0 || (p = strchr(buf, ' ')) == NULL) {
+                    log_message("got non-HTTP response '%s'\n", buf);
+                    return -1;
+                }
+                status = atoi(p + 1);
+                log_message("Parsed HTTP status code: %d from response line: %s", status, buf);
+            }
+        }
+
+        /* Validate status code */
         if (status != 206 && status != 301 && status != 302) {
             if (status >= 300 && status < 400) {
                 log_message(
