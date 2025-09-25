@@ -58,7 +58,7 @@ namespace zsync2 {
 
         std::string cwd;
 
-        off_t remoteFileSizeCache;
+        long long remoteFileSizeCache;
 
         unsigned long rangesOptimizationThreshold;
 
@@ -1058,12 +1058,12 @@ namespace zsync2 {
             return true;
         }
 
-        bool remoteFileSize(off_t& fileSize) {
+        bool remoteFileSize(long long& fileSize) {
             if (remoteFileSizeCache < 0) {
                 if (zsHandle == nullptr)
                     return false;
 
-                remoteFileSizeCache = zsync_filelen(zsHandle);
+                remoteFileSizeCache = static_cast<long long>(zsync_filelen(zsHandle));
             }
 
             if (remoteFileSizeCache < 0)
@@ -1134,7 +1134,7 @@ namespace zsync2 {
         return d->setCwd(path);
     }
 
-    bool ZSyncClient::remoteFileSize(off_t& fileSize) {
+    bool ZSyncClient::remoteFileSize(long long& fileSize) {
         return d->remoteFileSize(fileSize);
     }
 

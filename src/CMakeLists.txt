@@ -47,11 +47,10 @@ function(add_libzsync2 NAME BUILD_TYPE)
 
     # largefile support à la gpgme
     # libzsync uses off_t everywhere, this allows us to support files larger than 2GiB
-    # must(!) be public definitions, otherwise integrating libzsync2 elsewhere (e.g., AppImageUpdate) may lead to
-    # compiler errors because the off_t definitions differ
+    # our public APIs do not use off_t but long long to avoid this ambiguity
     target_compile_definitions("${NAME}"
-        PUBLIC -D_FILE_OFFSET_BITS=64
-        PUBLIC -DLARGEFILE_SOURCE
+        PRIVATE -D_FILE_OFFSET_BITS=64
+        PRIVATE -DLARGEFILE_SOURCE
     )
 endfunction()
 

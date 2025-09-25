@@ -55,7 +55,7 @@ namespace zsync2 {
         // set fileSize to size of remote file in bytes
         // returns true if the value is available (i.e., the update has started and the value can be read from the
         // .zsync file), false otherwise
-        bool remoteFileSize(off_t& fileSize);
+        bool remoteFileSize(long long& fileSize);
 
         // set path in which the .zsync file should be stored when downloaded first
         void storeZSyncFileInPath(const std::string& path);
